@@ -1,0 +1,9 @@
+pyrosm>=0.6.2
+geopandas>=0.14
+shapely>=2.0
+pandas>=2.0
+pyproj>=3.6
+fiona>=1.9
+pytest>=8.0
+black>=24.0
+ruff>=0.4

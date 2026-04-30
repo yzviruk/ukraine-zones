@@ -1,0 +1,98 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+#panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  background: #ffffff;
+  padding: 16px 18px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  width: 300px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+#panel h1 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+}
+
+#panel .hint {
+  margin: 0 0 14px;
+  color: #555;
+  font-size: 13px;
+}
+
+#panel #km-label,
+#panel #km-label-2 {
+  font-weight: 700;
+  color: #b00020;
+}
+
+#slider {
+  margin: 4px 6px 6px;
+  height: 8px;
+}
+
+.ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  margin-top: 4px;
+  color: #888;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+#panel .footer {
+  margin: 12px 0 0;
+  color: #888;
+  font-size: 11px;
+}
+
+#panel .footer a {
+  color: #555;
+}
+
+#loading {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+#loading.hidden {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  #panel {
+    top: auto;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}

@@ -1,0 +1,30 @@
+# Data: too large to commit
+data/raw/*.pbf
+data/processed/*.gpkg
+data/processed/*.geojson
+web/data/*.geojson
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Node (mapshaper)
+node_modules/
+package-lock.json

@@ -1,0 +1,2 @@
+# Place ukraine-latest.osm.pbf here:
+#   curl -L -o ukraine-latest.osm.pbf https://download.geofabrik.de/europe/ukraine-latest.osm.pbf
