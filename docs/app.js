@@ -88,8 +88,8 @@ slider.noUiSlider.on("change", (vals) => {
 showZone(5);
 
 // Rivers layer
-const RIVER_STYLE = { color: "#1f77c4", weight: 1.4, opacity: 1.0 };
-const STREAM_STYLE = { color: "#1f77c4", weight: 1.0, opacity: 0.9 };
+const RIVER_STYLE = { color: "#1f77c4", weight: 1.8, opacity: 0.85 };
+const STREAM_STYLE = { color: "#1f77c4", weight: 1.5, opacity: 0.85 };
 
 let riversLayer = null;
 let streamsLayer = null;
