@@ -1,8 +1,6 @@
 # Data: too large to commit
 data/raw/*.pbf
 data/processed/*.gpkg
-data/processed/*.geojson
-web/data/*.geojson
 
 # Python
 __pycache__/
