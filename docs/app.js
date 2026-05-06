@@ -89,7 +89,7 @@ showZone(5);
 
 // Rivers layer
 const RIVER_STYLE = { color: "#1f77c4", weight: 1.4, opacity: 0.85 };
-const STREAM_STYLE = { color: "#5ba9d8", weight: 0.6, opacity: 0.7 };
+const STREAM_STYLE = { color: "#1f77c4", weight: 1.0, opacity: 0.7 };
 
 let riversLayer = null;
 let streamsLayer = null;

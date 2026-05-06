@@ -86,3 +86,43 @@ slider.noUiSlider.on("change", (vals) => {
 
 // Show the initial layer.
 showZone(5);
+
+// Rivers layer
+const RIVER_STYLE = { color: "#1f77c4", weight: 1.4, opacity: 0.85 };
+const STREAM_STYLE = { color: "#1f77c4", weight: 1.0, opacity: 0.7 };
+
+let riversLayer = null;
+let streamsLayer = null;
+
+async function loadAndToggle(file, style, currentRef, checked) {
+  if (checked) {
+    if (!currentRef.layer) {
+      const res = await fetch(`data/${file}`);
+      if (!res.ok) {
+        alert(`Не вдалось завантажити ${file}`);
+        return;
+      }
+      const geojson = await res.json();
+      currentRef.layer = L.geoJSON(geojson, { style });
+    }
+    if (!map.hasLayer(currentRef.layer)) currentRef.layer.addTo(map);
+  } else if (currentRef.layer && map.hasLayer(currentRef.layer)) {
+    map.removeLayer(currentRef.layer);
+  }
+}
+
+const riversRef = { layer: null };
+const streamsRef = { layer: null };
+
+const toggleRivers = document.getElementById("toggle-rivers");
+toggleRivers.addEventListener("change", () =>
+  loadAndToggle("rivers.geojson", RIVER_STYLE, riversRef, toggleRivers.checked)
+);
+
+const toggleStreams = document.getElementById("toggle-streams");
+toggleStreams.addEventListener("change", () =>
+  loadAndToggle("streams.geojson", STREAM_STYLE, streamsRef, toggleStreams.checked)
+);
+
+// Auto-load rivers since checkbox starts checked.
+loadAndToggle("rivers.geojson", RIVER_STYLE, riversRef, true);

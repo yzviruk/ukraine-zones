@@ -96,3 +96,11 @@ html, body {
     width: auto;
   }
 }
+
+.layer-toggle {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.layer-toggle input { margin-right: 6px; }
