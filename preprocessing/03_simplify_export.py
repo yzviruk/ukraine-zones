@@ -24,7 +24,7 @@ SRC = PROJECT_ROOT / "data" / "processed" / "stage2.gpkg"
 OUT_DIR = PROJECT_ROOT / "web" / "data"
 
 DISTANCES_KM = list(range(1, 11))
-TOLERANCE_METERS = 100  # in source CRS (EPSG:6381)
+TOLERANCE_METERS = 200  # in source CRS (EPSG:6381)
 WEB_CRS = 4326
 
 
