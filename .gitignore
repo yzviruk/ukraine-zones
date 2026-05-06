@@ -28,3 +28,6 @@ build/
 # Node (mapshaper)
 node_modules/
 package-lock.json
+data/raw/ua-residential.geojson
+data/raw/ua-places.geojson
+data/raw/ua-border.geojson

@@ -1,23 +1,15 @@
 """
-Stage 1: Build a single "settlement areas" geometry that approximates the
-ACTUAL BUILT-UP BOUNDARIES of all populated places in Ukraine.
+Stage 1 (osmium-based): build settlement_areas geometry from
+osmium-extracted GeoJSON layers.
 
-Strategy (landuse=residential + fallback):
-  1. Take all landuse=residential polygons from OSM.
-  2. For place=* NODES NOT covered by any residential polygon, add a
-     type-dependent fallback buffer:
-       city    -> 2000 m
-       town    -> 1000 m
-       village ->  300 m
-       hamlet  ->  100 m
-  3. Union everything into a single (Multi)Polygon.
+Inputs:
+  data/raw/ua-residential.geojson  - landuse=residential polygons
+  data/raw/ua-places.geojson       - place=city/town/village/hamlet
+  data/raw/ua-border.geojson       - Ukraine boundary (relation 60199)
 
-Stage 2 will buffer THIS geometry, so distances are measured from the
-EDGES of populated areas, not from a single centre point.
-
-Output: data/processed/stage1.gpkg with two layers:
+Output: data/processed/stage1.gpkg
   - settlement_areas (one MultiPolygon, EPSG:6381)
-  - ukraine          (Ukraine boundary,   EPSG:6381)
+  - ukraine          (Ukraine boundary, EPSG:6381)
 """
 
 from __future__ import annotations
@@ -25,109 +17,73 @@ from __future__ import annotations
 from pathlib import Path
 
 import geopandas as gpd
-from pyrosm import OSM
 from shapely.geometry import MultiPolygon
 from shapely.ops import unary_union
 
 HERE = Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parent
-RAW_PBF = PROJECT_ROOT / "data" / "raw" / "ukraine-latest.osm.pbf"
+RAW = PROJECT_ROOT / "data" / "raw"
+RES = RAW / "ua-residential.geojson"
+PLACES = RAW / "ua-places.geojson"
+BORDER = RAW / "ua-border.geojson"
 OUT_GPKG = PROJECT_ROOT / "data" / "processed" / "stage1.gpkg"
 
-TARGET_CRS = 6381  # Ukraine 2000 / Transverse Mercator (metric)
+TARGET_CRS = 6381
 PLACE_TYPES = ["city", "town", "village", "hamlet"]
-FALLBACK_BUFFER_M = {
-    "city": 2000.0,
-    "town": 1000.0,
-    "village": 300.0,
-    "hamlet": 100.0,
-}
+FALLBACK_BUFFER_M = {"city": 2000.0, "town": 1000.0, "village": 300.0, "hamlet": 100.0}
 
 
-def extract_residential_landuse(osm):
-    print("Extracting landuse=residential polygons ...")
-    landuse = osm.get_landuse(custom_filter={"landuse": ["residential"]})
-    if landuse is None or landuse.empty:
-        raise SystemExit("No landuse=residential found - PBF may be incomplete.")
-    landuse = landuse[landuse.geometry.notna()].copy()
+def main() -> None:
+    for f in (RES, PLACES, BORDER):
+        if not f.exists():
+            raise SystemExit("Missing %s. Run osmium tags-filter / export first." % f)
+    OUT_GPKG.parent.mkdir(parents=True, exist_ok=True)
+
+    print("Loading residential landuse ...")
+    landuse = gpd.read_file(RES)
+    landuse = landuse[landuse.geometry.notna()]
     landuse = landuse[landuse.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
     landuse = landuse.to_crs(epsg=TARGET_CRS)
     print("  -> %d residential polygons" % len(landuse))
-    return landuse
 
-
-def extract_place_points(osm):
-    print("Extracting place nodes (city/town/village/hamlet) ...")
-    places = osm.get_pois(custom_filter={"place": PLACE_TYPES})
-    if places is None or places.empty:
-        raise SystemExit("No place=* features found.")
-    places = places[places.geometry.notna()].copy()
+    print("Loading place=* features ...")
+    places = gpd.read_file(PLACES)
+    places = places[places.geometry.notna()]
     places = places[places.geometry.geom_type == "Point"]
     if "place" not in places.columns:
-        raise SystemExit("Column 'place' missing in pyrosm output.")
-    places = places.to_crs(epsg=TARGET_CRS)
+        raise SystemExit("Column 'place' missing in ua-places.geojson")
+    places = places[places["place"].isin(PLACE_TYPES)]
+    places = places.to_crs(epsg=TARGET_CRS).reset_index(drop=True)
     print("  -> %d place=* point nodes" % len(places))
-    return places[["geometry", "place"]].reset_index(drop=True)
 
+    print("Loading Ukraine border ...")
+    border = gpd.read_file(BORDER)
+    border = border[border.geometry.notna()]
+    border = border[border.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
+    border = border.to_crs(epsg=TARGET_CRS)
+    if border.empty:
+        raise SystemExit("No polygon geometry in ua-border.geojson")
+    print("  -> %d border polygon feature(s)" % len(border))
 
-def fallback_buffers_for_uncovered_points(points, landuse):
-    """Buffer place=* points NOT covered by any residential polygon."""
     print("Spatial join: which place points are inside residential polygons?")
-    joined = gpd.sjoin(
-        points,
-        landuse[["geometry"]],
-        how="left",
-        predicate="within",
-    )
+    joined = gpd.sjoin(places, landuse[["geometry"]], how="left", predicate="within")
     covered_idx = joined.dropna(subset=["index_right"]).index.unique()
-    uncovered = points.loc[~points.index.isin(covered_idx)].copy()
-    print("  -> %d points uncovered by residential landuse" % len(uncovered))
+    uncovered = places.loc[~places.index.isin(covered_idx)].copy()
+    print("  -> %d uncovered points -> need fallback buffer" % len(uncovered))
+
     if uncovered.empty:
-        return gpd.GeoSeries([], crs=points.crs)
+        fallback_geoms = []
+    else:
+        radii = uncovered["place"].map(FALLBACK_BUFFER_M)
+        if radii.isna().any():
+            unknown = uncovered.loc[radii.isna(), "place"].unique()
+            raise SystemExit("Unknown place types: %s" % list(unknown))
+        fallback_geoms = list(uncovered.geometry.buffer(radii))
+        by_type = uncovered.groupby("place").size().to_dict()
+        print("  -> fallback by type: %s" % by_type)
 
-    radii = uncovered["place"].map(FALLBACK_BUFFER_M)
-    if radii.isna().any():
-        unknown = uncovered.loc[radii.isna(), "place"].unique()
-        raise SystemExit("Unknown place types: %s" % list(unknown))
-
-    buffered = uncovered.geometry.buffer(radii)
-    by_type = uncovered.groupby("place").size().to_dict()
-    print("  -> fallback buffers by type: %s" % by_type)
-    return buffered
-
-
-def extract_ukraine_boundary(osm):
-    print("Extracting Ukraine boundary (admin_level=2) ...")
-    boundaries = osm.get_boundaries(boundary_type="administrative")
-    if boundaries is None or boundaries.empty:
-        raise SystemExit("No administrative boundaries returned.")
-    ukraine = boundaries[boundaries["admin_level"] == "2"].copy()
-    if ukraine.empty:
-        raise SystemExit("Ukraine admin_level=2 boundary not found.")
-    ukraine = ukraine.to_crs(epsg=TARGET_CRS)
-    print("  -> %d Ukraine boundary feature(s)" % len(ukraine))
-    cols = ["geometry"] + (["name"] if "name" in ukraine.columns else [])
-    return ukraine[cols]
-
-
-def main():
-    if not RAW_PBF.exists():
-        raise SystemExit(
-            "OSM PBF not found at %s. Download from "
-            "https://download.geofabrik.de/europe/ukraine-latest.osm.pbf" % RAW_PBF
-        )
-    OUT_GPKG.parent.mkdir(parents=True, exist_ok=True)
-
-    print("Reading %s ..." % RAW_PBF.name)
-    osm = OSM(str(RAW_PBF))
-
-    landuse = extract_residential_landuse(osm)
-    place_points = extract_place_points(osm)
-    fallback = fallback_buffers_for_uncovered_points(place_points, landuse)
-    ukraine = extract_ukraine_boundary(osm)
-
-    print("Unioning landuse + fallback buffers into settlement_areas ...")
-    parts = list(landuse.geometry) + list(fallback)
+    print("Unioning landuse + fallback into settlement_areas ...")
+    parts = list(landuse.geometry) + fallback_geoms
     settlement_geom = unary_union(parts)
     if settlement_geom.geom_type == "Polygon":
         settlement_geom = MultiPolygon([settlement_geom])
@@ -140,7 +96,7 @@ def main():
 
     print("Writing %s ..." % OUT_GPKG)
     settlement_gdf.to_file(OUT_GPKG, layer="settlement_areas", driver="GPKG")
-    ukraine.to_file(OUT_GPKG, layer="ukraine", driver="GPKG")
+    border.to_file(OUT_GPKG, layer="ukraine", driver="GPKG")
 
     area_km2 = settlement_geom.area / 1e6
     print("  settlement_areas covers ~%.0f km^2" % area_km2)
