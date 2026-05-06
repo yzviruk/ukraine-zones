@@ -126,3 +126,20 @@ toggleStreams.addEventListener("change", () =>
 
 // Auto-load rivers since checkbox starts checked.
 loadAndToggle("rivers.geojson", RIVER_STYLE, riversRef, true);
+
+// Soils layers
+const CHERNOZEM_STYLE = { color: "#3a2818", weight: 0, fillColor: "#3a2818", fillOpacity: 0.45 };
+const PHAEOZEM_STYLE  = { color: "#7a5a3a", weight: 0, fillColor: "#7a5a3a", fillOpacity: 0.35 };
+
+const chernozemsRef = { layer: null };
+const phaeozemsRef  = { layer: null };
+
+const toggleChernozems = document.getElementById("toggle-chernozems");
+toggleChernozems.addEventListener("change", () =>
+  loadAndToggle("chernozems.geojson", CHERNOZEM_STYLE, chernozemsRef, toggleChernozems.checked)
+);
+
+const togglePhaeozems = document.getElementById("toggle-phaeozems");
+togglePhaeozems.addEventListener("change", () =>
+  loadAndToggle("phaeozems.geojson", PHAEOZEM_STYLE, phaeozemsRef, togglePhaeozems.checked)
+);
