@@ -26,7 +26,7 @@ async function loadZone(km) {
   if (cache[km]) return cache[km];
   loadingEl.classList.remove("hidden");
   try {
-    const res = await fetch(`data/zones_${km}km.geojson`, { cache: "force-cache" });
+    const res = await fetch(`data/zones_${km}km.geojson`);
     if (!res.ok) {
       throw new Error(`HTTP ${res.status} for zones_${km}km.geojson`);
     }
