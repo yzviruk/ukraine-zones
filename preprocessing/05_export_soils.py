@@ -34,10 +34,17 @@ RAW_WRB = RAW_DIR / "ua-wrb.tif"
 
 WRB_CODES = {"Chernozems": 7, "Phaeozems": 20}
 
+"""
 DOWNSCALE_FACTOR = 4       # 250 m -> 1 km. Drops vertex count ~16x.
 MIN_POLY_AREA_DEG = 1e-4   # ~1 km^2; drops noise specks
 SIMPLIFY_DEG = 0.01        # ~1 km
 COORD_PRECISION = 4
+"""
+
+DOWNSCALE_FACTOR = 1       # native resolution 250 m
+MIN_POLY_AREA_DEG = 1e-5   # ~0.1 km² мінімум (дрібні острівки залишаться)
+SIMPLIFY_DEG = 0.002       # ~200 m
+COORD_PRECISION = 5        # ~1 m precision
 
 
 def download_if_missing(url: str, dst: Path) -> None:
