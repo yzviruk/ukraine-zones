@@ -47,3 +47,28 @@ def test_coordinates_are_coarse(villages):
     for geom in villages.geometry:
         for value in (geom.x, geom.y):
             assert round(value, 4) == pytest.approx(value, abs=1e-9)
+
+
+POTENTIAL = PUBLIC.parent / "chernyakhiv_potential.geojson"
+POTENTIAL_PROPERTIES = {"class", "candidate", "label", "source"}
+
+
+@pytest.fixture(scope="module")
+def potential() -> gpd.GeoDataFrame:
+    if not POTENTIAL.exists():
+        pytest.skip("run research/chernyakhiv/05d_map.py")
+    return gpd.read_file(POTENTIAL)
+
+
+def test_potential_layer_is_coarse_polygons_in_vinnytsia(potential):
+    assert potential.crs.to_epsg() == 4326
+    assert potential.geometry.geom_type.isin(["Polygon", "MultiPolygon"]).all()
+    assert potential.within(VINNYTSIA_BOUNDS.buffer(0.05)).all()
+    assert set(potential.columns) - {"geometry"} == POTENTIAL_PROPERTIES
+    assert set(potential["class"]) <= {"high", "elevated"}
+
+
+def test_potential_cells_are_at_least_2_km(potential):
+    # Dissolved 2 km cells: every part is at least one whole cell (4 km2).
+    parts = potential.to_crs(6381).explode(index_parts=False)
+    assert parts.area.min() >= 4e6 * 0.99

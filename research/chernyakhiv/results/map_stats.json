@@ -1,0 +1,23 @@
+{
+  "cells": 7371,
+  "cell_km": 2.0,
+  "high_cells": 739,
+  "elevated_cells": 1104,
+  "candidate_cells": 453,
+  "candidate_km": 3.0,
+  "village_class_shares": {
+    "site_villages": {
+      "none": 0.441,
+      "elevated": 0.288,
+      "high": 0.271
+    },
+    "other_villages": {
+      "none": 0.604,
+      "elevated": 0.215,
+      "high": 0.181
+    }
+  },
+  "n_site_villages": 299,
+  "n_other_villages": 1202,
+  "public_kb": 111
+}

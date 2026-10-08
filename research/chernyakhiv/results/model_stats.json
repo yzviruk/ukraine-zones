@@ -80,6 +80,5 @@
     "logistic": 0.61,
     "gbm": 0.619,
     "raw_catchment": 0.612
-  },
-  "suitability_area_share_ge_80": 0.13
+  }
 }

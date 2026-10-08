@@ -1,6 +1,6 @@
 """
 Stage 5c: presence-background model of Chernyakhiv settlement locations,
-with spatial cross-validation and a local suitability raster.
+with spatial cross-validation. The map itself is built by 05d_map.py.
 
 Presence:   491 settlements, refined positions (stage 5.1, layer "sites_refined").
 Background: random oblast points whose distance to modern built-up areas follows
@@ -29,7 +29,6 @@ all features (+ squares), gradient boosting.
 
 Outputs:
     research/chernyakhiv/results/model_stats.json, model_*.png    (aggregated)
-    data/processed/chernyakhiv_model/suitability_150m.tif           (LOCAL ONLY)
 """
 
 from __future__ import annotations
@@ -417,11 +416,9 @@ def plot_partial(model, data, names, path: Path) -> None:
     plt.close(fig)
 
 
-def main() -> None:
-    rng = np.random.default_rng(SEED)
-    RESULTS.mkdir(exist_ok=True)
-    OUT_LOCAL.mkdir(parents=True, exist_ok=True)
-
+def build_dataset(rng) -> dict:
+    """Presence + matched background with features, and the same features on the
+    150 m map grid. Shared by 05c (evaluation) and 05d (map)."""
     sites = gpd.read_file(SITES, layer="sites_refined")
     elevation, profile = read("elevation")
     transform = profile["transform"]
@@ -452,49 +449,54 @@ def main() -> None:
     ok = data[FEATURES].notna().all(axis=1)
     print(f"dropped (nodata): {(~ok).sum()}")
     data, points = data[ok].reset_index(drop=True), points[ok.to_numpy()]
-    xy = np.c_[transform.c + points[:, 1] * transform.a, transform.f + points[:, 0] * transform.e]
-
-    print("spatial CV ...")
-    s2 = pd.DataFrame(s2_cols)[ok.to_numpy()[: len(s2_rc)]].reset_index(drop=True)
-    summary, imp, oof = spatial_cv(data, s2, xy, rng)
-    print(json.dumps(summary, indent=1))
-
-    print("final fit + map ...")
-    models = make_models()
-    for _, (cols, model) in models.items():
-        model.fit(data[cols], data["y"])
-    gbm = models["gbm"][1]
-    logistic = models["logistic"][1]
     grid_df = pd.DataFrame(grid_cols)
-    valid = grid_df.notna().all(axis=1).to_numpy()
-    pred = np.full(len(grid_df), np.nan, dtype="float32")
-    pred[valid] = gbm.predict_proba(grid_df[valid])[:, 1]
-    # Suitability = percentile among the available (background) points, 0-100.
-    bg_pred = np.sort(gbm.predict_proba(data.loc[data["y"] == 0, FEATURES])[:, 1])
-    rank = np.full_like(pred, np.nan)
-    rank[valid] = 100 * np.searchsorted(bg_pred, pred[valid]) / len(bg_pred)
-    out = np.full(grid.shape, -9999.0, dtype="float32")
-    out[grid] = np.nan_to_num(rank, nan=-9999.0)
-    prof = profile.copy()
-    prof.update(
+    gi, gj = np.nonzero(grid)
+    grid_profile = profile.copy()
+    grid_profile.update(
         height=grid.shape[0],
         width=grid.shape[1],
         transform=transform * transform.scale(GRID_STEP),
         dtype="float32",
         nodata=-9999.0,
     )
-    with rasterio.open(OUT_LOCAL / "suitability_150m.tif", "w", **prof) as dst:
-        dst.write(out, 1)
+    return {
+        "data": data,
+        "stage2": pd.DataFrame(s2_cols)[ok.to_numpy()[: len(s2_rc)]].reset_index(drop=True),
+        "xy": np.c_[
+            transform.c + points[:, 1] * transform.a, transform.f + points[:, 0] * transform.e
+        ],
+        "grid": grid,
+        "grid_df": grid_df,
+        "grid_valid": grid_df.notna().all(axis=1).to_numpy(),
+        "grid_xy": np.c_[
+            transform.c + gj * GRID_STEP * transform.a, transform.f + gi * GRID_STEP * transform.e
+        ],
+        "grid_profile": grid_profile,
+    }
+
+
+def main() -> None:
+    rng = np.random.default_rng(SEED)
+    RESULTS.mkdir(exist_ok=True)
+    ds = build_dataset(rng)
+    data, xy, grid, grid_df = ds["data"], ds["xy"], ds["grid"], ds["grid_df"]
+
+    print("spatial CV ...")
+    summary, imp, oof = spatial_cv(data, ds["stage2"], xy, rng)
+    print(json.dumps(summary, indent=1))
+
+    print("final fit ...")
+    models = make_models()
+    for _, (cols, model) in models.items():
+        model.fit(data[cols], data["y"])
+    gbm = models["gbm"][1]
+    logistic = models["logistic"][1]
 
     print("out-of-fold map + village check ...")
-    gi, gj = np.nonzero(grid)
-    grid_xy = np.c_[
-        transform.c + gj * GRID_STEP * transform.a, transform.f + gi * GRID_STEP * transform.e
-    ]
-    maps = cv_map(data, grid_df, valid, grid_xy, xy, rng)
+    maps = cv_map(data, grid_df, ds["grid_valid"], ds["grid_xy"], xy, rng)
     # No fitting at all: the largest catchment around the village.
     maps["raw_catchment"] = grid_df["facc_max"].to_numpy()
-    villages = village_check(maps, grid.shape, grid, prof["transform"])
+    villages = village_check(maps, grid.shape, grid, ds["grid_profile"]["transform"])
     print(villages)
 
     coef = logistic[-1].coef_[0][: len(FEATURES)]
@@ -515,7 +517,6 @@ def main() -> None:
         "gbm_permutation_importance_auc": imp.round(4).to_dict(),
         "logistic_linear_coef_std": dict(zip(FEATURES, np.round(coef, 3).tolist(), strict=True)),
         "village_auc_p90_within_2km_oof": villages,
-        "suitability_area_share_ge_80": round(float(np.nanmean(rank[valid] >= 80)), 3),
     }
     (RESULTS / "model_stats.json").write_text(
         json.dumps(stats_out, ensure_ascii=False, indent=2), encoding="utf-8"
