@@ -220,5 +220,7 @@ dist_water, dist_river, hand (над найближчим водотоком OSM
   `02_geocode.py` зберігає `anchor_x/anchor_y`; тести: 39 зелених.
   Примітка: black/ruff запускати з `--config preprocessing/pyproject.toml` (з кореня
   конфіг не підхоплюється; без нього black ламає line-length 100).
+  Локальний перегляд уточнення на мапі: `05b_local_viewer.py` →
+  `data/processed/chernyakhiv_viewer/` (не публікувати), див. `refine.md`.
   Далі: етап 5, крок 2 — модель presence–background на `sites_refined`; контроль
   уточнювати тим самим правилом (функції `snap`/`pseudo_with_anchors` з 05a).
