@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Черняхів: точні дані</title>
+  <!-- Exact site positions: local, or encrypted on Pages (decision 1 in research/chernyakhiv/PLAN.md) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <style>
+    :root { --ink: #1d1d1b; --muted: #5c5b57; --panel: #ffffffee; --line: #d9d8d3;
+            --named: #1a9e5c; --dem: #2a78d6; --none: #8a8984; --before: #e0582a; }
+    html, body { margin: 0; height: 100%; font: 14px/1.4 system-ui, sans-serif; color: var(--ink); }
+    #map { position: absolute; inset: 0; }
+    .panel { position: absolute; z-index: 1000; top: 10px; left: 54px; width: 300px;
+             max-height: calc(100% - 40px); overflow: auto; background: var(--panel);
+             border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+             box-shadow: 0 2px 8px #0002; }
+    .panel h1 { font-size: 15px; margin: 0 0 4px; }
+    .panel p { margin: 4px 0; color: var(--muted); font-size: 12px; }
+    .panel label { display: flex; align-items: center; gap: 6px; margin: 3px 0; cursor: pointer; }
+    .panel input[type=number] { width: 80px; }
+    .sw { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+    .ring { border: 2px solid var(--before); background: transparent; width: 9px; height: 9px; }
+    .bar { width: 18px; height: 4px; display: inline-block; flex: none; }
+    .stats { font-variant-numeric: tabular-nums; }
+    .leaflet-popup-content { font-size: 13px; max-width: 360px; }
+    .leaflet-popup-content dl { display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; margin: 6px 0; }
+    .leaflet-popup-content dt { color: var(--muted); }
+    .leaflet-popup-content dd { margin: 0; }
+    .desc { color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 4px; }
+    .fulltext { font-size: 12px; max-height: 220px; overflow: auto; white-space: pre-wrap; margin-top: 4px; }
+    .leaflet-popup-content details summary { cursor: pointer; color: var(--dem); margin-top: 6px; }
+    #lock { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center;
+            background: #f4f3efee; }
+    #lock.hidden { display: none; }
+    #lock form { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 18px 20px;
+                 width: min(340px, calc(100% - 32px)); box-shadow: 0 4px 16px #0002; }
+    #lock h2 { font-size: 16px; margin: 0 0 6px; }
+    #lock p { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
+    #lock input { width: 100%; box-sizing: border-box; padding: 8px; font-size: 14px; }
+    #lock button { margin-top: 10px; padding: 7px 14px; font-size: 14px; }
+    #lock .err { color: #b00020; min-height: 1.2em; margin: 6px 0 0; }
+    @media (max-width: 600px) { .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: 20px; max-height: 45%; } }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<div id="lock" class="hidden">
+  <form id="lockForm">
+    <h2>Черняхівська культура: точні дані</h2>
+    <p>Закритий доступ. Точні місця пам'яток і тексти каталогу (© Магомедов Б. В., ІА НАН
+      України, 2022) — лише для дослідницької роботи, не поширювати.</p>
+    <input type="password" id="pw" autocomplete="current-password" placeholder="Пароль" autofocus>
+    <button type="submit">Відкрити</button>
+    <p class="err" id="pwErr"></p>
+  </form>
+</div>
+<div class="panel">
+  <h1>Черняхівська культура: точні дані</h1>
+  <p>Точні місця пам'яток — не поширювати.</p>
+  <p class="stats" id="stats"></p>
+  <strong>Прив'язка</strong>
+  <label><input type="checkbox" data-snap="named" checked><span class="sw" style="background:var(--named)"></span>за назвою водойми (OSM)</label>
+  <label><input type="checkbox" data-snap="dem" checked><span class="sw" style="background:var(--dem)"></span>за типом водойми (DEM)</label>
+  <label><input type="checkbox" data-snap="none" checked><span class="sw" style="background:var(--none)"></span>без прив'язки</label>
+  <label><input type="checkbox" id="showBefore" checked><span class="sw ring"></span>положення етапу 2 + лінія зсуву</label>
+  <label>мін. зсув, м <input type="number" id="minShift" value="0" min="0" step="50"></label>
+  <label>№ <input type="number" id="findNo" min="1" max="513"> <button id="go">знайти</button></label>
+  <p><strong>Водотоки з DEM</strong> (водозбір):</p>
+  <label><span class="bar" style="background:rgb(110,170,230)"></span>1–10 км²</label>
+  <label><span class="bar" style="background:rgb(40,110,210)"></span>10–100 км²</label>
+  <label><span class="bar" style="background:rgb(10,50,150)"></span>≥ 100 км²</label>
+  <p><strong>Придатність</strong> (модель «водозбір», 150 м; шар праворуч угорі):</p>
+  <label><span class="sw" style="background:rgb(118,42,131);border-radius:2px"></span>найвищі 3 % доступних місць</label>
+  <label><span class="sw" style="background:rgb(153,112,171);border-radius:2px"></span>90–97 %</label>
+  <label><span class="sw" style="background:rgb(194,165,207);border-radius:2px"></span>75–90 %</label>
+  <label><span class="sw" style="background:rgb(231,212,232);border-radius:2px"></span>50–75 %</label>
+  <p>Шари (відмивка, водотоки, придатність, підкладка) — праворуч угорі.</p>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+const OVERLAYS = {"channels": [[47.93295474260809, 27.229305979972242], [50.00318896539091, 30.302083240831475]], "hillshade": [[47.93286446187735, 27.229305979972242], [50.00318896539091, 30.30235273541671]], "suitability": [[47.931871363436365, 27.229305979972242], [50.00318896539091, 30.302891724587184]]};
+const MODE = "encrypted";  // "encrypted": sites.enc.json, see 05b_viewer.py
+const COLORS = { named: "#1a9e5c", dem: "#2a78d6", none: "#8a8984" };
+const SNAP_LABEL = { named: "за назвою (OSM)", dem: "за типом (DEM)", none: "немає" };
+
+const map = L.map("map", { preferCanvas: true });
+const [hz, hlat, hlon] = location.hash.slice(1).split("/").map(Number);
+map.setView(hlat ? [hlat, hlon] : [49.1, 28.5], hz || 8);
+map.on("moveend", () => {
+  const c = map.getCenter();
+  history.replaceState(null, "", `#${map.getZoom()}/${c.lat.toFixed(5)}/${c.lng.toFixed(5)}`);
+});
+const bases = {
+  "OpenStreetMap": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    { maxZoom: 19, attribution: "© OpenStreetMap" }),
+  "OpenTopoMap": L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    { maxZoom: 17, attribution: "© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)" }),
+  "Супутник (Esri)": L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom: 19, attribution: "© Esri" }),
+};
+bases["OpenStreetMap"].addTo(map);
+
+map.createPane("raster"); map.getPane("raster").style.zIndex = 350;
+const hillshade = L.imageOverlay("hillshade.webp", OVERLAYS.hillshade, { opacity: 0.45, pane: "raster" }).addTo(map);
+const channels = L.imageOverlay("channels.png", OVERLAYS.channels, { opacity: 0.9, pane: "raster" }).addTo(map);
+channels.getElement().style.imageRendering = "pixelated";
+const waterways = L.layerGroup();
+fetch("waterways.geojson").then(r => r.json()).then(g => {
+  L.geoJSON(g, { style: { color: "#0a7fb0", weight: 1.2, opacity: 0.8 },
+    onEachFeature: (f, l) => f.properties.name && l.bindTooltip(f.properties.name, { sticky: true }) })
+   .addTo(waterways);
+});
+
+const siteLayer = L.layerGroup().addTo(map);
+const overlayLayers = {
+  "Відмивка рельєфу (DEM)": hillshade,
+  "Водотоки з DEM (≥ 1 км²)": channels,
+  "Водотоки OSM": waterways,
+};
+if (OVERLAYS.suitability) {
+  overlayLayers["Придатність (модель, 150 м)"] =
+    L.imageOverlay("suitability.png", OVERLAYS.suitability, { opacity: 0.75, pane: "raster" });
+}
+overlayLayers["Пам'ятки"] = siteLayer;
+L.control.layers(bases, overlayLayers, { collapsed: true }).addTo(map);
+L.control.scale({ imperial: false }).addTo(map);
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+function popup(p) {
+  const rows = [
+    ["Село", p.village], ["Район", p.district], ["Напрям", p.direction],
+    ["Водойма", p.water_name], ["Берег (текст)", p.bank], ["Клас водойми", p.water_class],
+    ["Берег (застосовано)", p.bank_used], ["Прив'язка", SNAP_LABEL[p.snap_how]],
+    ["Водозбір русла", p.channel_km2 != null ? p.channel_km2.toFixed(1) + " км²" : null],
+    ["Зсув", p.shift_m ? Math.round(p.shift_m) + " м" : null],
+  ].filter(([, v]) => v != null && v !== "");
+  return `<strong>№ ${p.no}</strong><dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` +
+         (p.text  // the full entry starts with the short description
+           ? `<details open><summary>Текст каталогу</summary><div class="fulltext">${esc(p.text)}</div></details>`
+           : `<div class="desc">${esc(p.desc)}</div>`);
+}
+
+let features = [];
+const byNo = {};
+function render() {
+  siteLayer.clearLayers();
+  const on = new Set([...document.querySelectorAll("[data-snap]")].filter(c => c.checked).map(c => c.dataset.snap));
+  const showBefore = document.getElementById("showBefore").checked;
+  const minShift = +document.getElementById("minShift").value || 0;
+  let n = 0;
+  for (const f of features) {
+    const p = f.properties;
+    if (!on.has(p.snap_how) || (p.shift_m || 0) < minShift) continue;
+    const [lon, lat] = f.geometry.type === "Point" ? f.geometry.coordinates : [0, 0];
+    if (p.role === "after") {
+      n++;
+      const m = L.circleMarker([lat, lon], { radius: 6, color: "#fff", weight: 1.5,
+        fillColor: COLORS[p.snap_how], fillOpacity: 0.95 }).bindPopup(popup(p));
+      m.bindTooltip(`№ ${p.no} ${p.village}`);
+      siteLayer.addLayer(m);
+      byNo[p.no] = m;
+    } else if (showBefore && p.role === "before" && p.snap_how !== "none") {
+      siteLayer.addLayer(L.circleMarker([lat, lon], { radius: 4, color: "#e0582a", weight: 2,
+        fill: false }).bindTooltip(`№ ${p.no}: етап 2`));
+    } else if (showBefore && p.role === "shift") {
+      siteLayer.addLayer(L.polyline(f.geometry.coordinates.map(([x, y]) => [y, x]),
+        { color: "#e0582a", weight: 1.5, dashArray: "4 4" }));
+    }
+  }
+  document.getElementById("stats").textContent = `Показано пам'яток: ${n} з 491`;
+}
+
+function show(geojson) {
+  features = geojson.features;
+  render();
+}
+
+// Encrypted mode: gzip -> AES-256-GCM, key = PBKDF2-SHA256(password) (05b_viewer.py).
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function decrypt(enc, password) {
+  const base = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64(enc.salt), iterations: enc.iterations, hash: "SHA-256" },
+    base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const zipped = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(enc.iv) }, key, b64(enc.ct));
+  const stream = new Blob([zipped]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return JSON.parse(await new Response(stream).text());
+}
+
+if (MODE === "encrypted") {
+  const lock = document.getElementById("lock");
+  const err = document.getElementById("pwErr");
+  lock.classList.remove("hidden");
+  const encPromise = fetch("sites.enc.json", { cache: "no-store" }).then(r => r.json());
+  document.getElementById("lockForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    err.textContent = "Перевірка…";
+    try {
+      show(await decrypt(await encPromise, document.getElementById("pw").value));
+      lock.classList.add("hidden");
+      err.textContent = "";
+    } catch (ex) {
+      console.error(ex);
+      err.textContent = "Невірний пароль.";
+    }
+  });
+} else {
+  fetch("sites.geojson").then(r => r.json()).then(show);
+}
+document.querySelectorAll(".panel input").forEach(el => el.addEventListener("change", render));
+document.getElementById("go").addEventListener("click", () => {
+  const m = byNo[+document.getElementById("findNo").value];
+  if (m) { map.setView(m.getLatLng(), 14); m.openPopup(); }
+});
+</script>
+</body>
+</html>
