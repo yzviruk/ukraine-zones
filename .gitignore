@@ -4,6 +4,9 @@ data/processed/*.gpkg
 # Copyrighted catalogue (Магомедов 2022) and data extracted from it
 data/raw/*.pdf
 data/processed/chernyakhiv_*
+# Rasters: Copernicus DEM tiles and derived layers
+data/raw/dem/
+data/processed/env/
 
 # Python
 __pycache__/
