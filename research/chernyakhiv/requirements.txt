@@ -1,1 +1,4 @@
 pypdf>=4.0
+scipy>=1.11
+pysheds>=0.4
+matplotlib>=3.8

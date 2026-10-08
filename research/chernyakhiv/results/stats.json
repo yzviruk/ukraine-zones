@@ -1,0 +1,90 @@
+{
+  "n": {
+    "sites": 491,
+    "pseudo": 1208,
+    "uniform": 5000
+  },
+  "auc_vs_pseudo": {
+    "dist_dstream": 0.458,
+    "dist_water": 0.434,
+    "hand_dstream": 0.466,
+    "rel_valley": 0.467,
+    "tpi300": 0.461,
+    "slope": 0.475,
+    "south_share": 0.531,
+    "flow_acc_km2": 0.584,
+    "elevation": 0.43,
+    "dist_builtup": 0.378
+  },
+  "auc_vs_pseudo_B_only": {
+    "dist_dstream": 0.467,
+    "dist_water": 0.439,
+    "hand_dstream": 0.467,
+    "rel_valley": 0.456,
+    "tpi300": 0.44,
+    "slope": 0.456,
+    "south_share": 0.532,
+    "flow_acc_km2": 0.573,
+    "elevation": 0.435,
+    "dist_builtup": 0.437
+  },
+  "auc_vs_uniform": {
+    "dist_dstream": 0.427,
+    "dist_water": 0.337,
+    "hand_dstream": 0.462,
+    "rel_valley": 0.474,
+    "tpi300": 0.523,
+    "slope": 0.551,
+    "south_share": 0.502,
+    "flow_acc_km2": 0.678,
+    "elevation": 0.418,
+    "dist_builtup": 0.141
+  },
+  "soil_shares": {
+    "sites": {
+      "інші": 0.037,
+      "чорноземи": 0.212,
+      "опідзолені чорноземи": 0.208,
+      "сірі лісові": 0.544
+    },
+    "pseudo": {
+      "інші": 0.044,
+      "чорноземи": 0.183,
+      "опідзолені чорноземи": 0.197,
+      "сірі лісові": 0.576
+    },
+    "uniform": {
+      "інші": 0.036,
+      "чорноземи": 0.179,
+      "опідзолені чорноземи": 0.23,
+      "сірі лісові": 0.556
+    }
+  },
+  "nearest_neighbour": {
+    "sites": {
+      "n": 491,
+      "nn_median_m": 1016.6093253530504,
+      "nn_q25_m": 0.0,
+      "nn_q75_m": 3132.5352016695233,
+      "clark_evans_R": 0.5578332744696677
+    },
+    "sites_village_level": {
+      "n": 293,
+      "nn_median_m": 4140.691792821151,
+      "nn_q25_m": 3233.94915805095,
+      "nn_q75_m": 5900.937211889702,
+      "clark_evans_R": 1.0110360851706692
+    },
+    "pseudo": {
+      "n": 1208,
+      "nn_median_m": 2639.2288266718333,
+      "nn_q25_m": 1816.4344119150924,
+      "nn_q75_m": 3447.347741499827,
+      "clark_evans_R": 1.1497868912943991
+    }
+  },
+  "coins": {
+    "villages_with_coin_finds": 66,
+    "of_them_with_chernyakhiv_sites": 35
+  }
+}
