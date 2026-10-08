@@ -68,8 +68,9 @@ LANDFORMS = {
     "ravine": r"балк|\bяр(?:у|ок|ка|ками|и|ом|ами|ів)?\b",
     "rise": r"підвищен|пагорб",
 }
+NOT_YEAR = r"(?<!\d)(?<!\d )"  # "у 2003 р. Потупчик" is a year, not a river
 WATERS = {
-    "river": r"\bр\. [" + UPPER + r"]",
+    "river": NOT_YEAR + r"\bр\. [" + UPPER + r"]",
     "stream": r"струм",
     "pond": r"став",
     "spring": r"джерел",
@@ -172,7 +173,7 @@ def parse_entry(no: int, text: str) -> dict:
         "bank": first(r"(лів|прав)\w* бер[еі][гз]", low)
         .replace("лів", "left")
         .replace("прав", "right"),
-        "water_name": first(rf"\bр\. ([{UPPER}][\w’'-]+(?: [{UPPER}][\w’'-]+)?)", desc),
+        "water_name": first(rf"{NOT_YEAR}\bр\. ([{UPPER}][\w’'-]+(?: [{UPPER}][\w’'-]+)?)", desc),
         # Position is sometimes given relative to ANOTHER village.
         "ref_village": first(
             rf"(?:від|біля|поблизу|між) (?:с\.|смт|м\.) ([{UPPER}][\w’'-]+(?: [{UPPER}][\w’'-]+)?)",

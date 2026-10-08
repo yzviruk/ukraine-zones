@@ -225,12 +225,15 @@ def main() -> None:
         village_idx = anchor_idx if village_idx is None else village_idx
         direction = row["direction"] if isinstance(row["direction"], str) else ""
         outskirts = "околиц" in str(row["desc"]).lower()
-        point = shift(places_m.geometry[anchor_idx], direction, outskirts, polygons, sindex)
+        anchor = places_m.geometry[anchor_idx]
+        point = shift(anchor, direction, outskirts, polygons, sindex)
         records.append(
             {
                 **row,
                 "match": how,
                 "place_idx": village_idx,
+                "anchor_x": anchor.x,
+                "anchor_y": anchor.y,
                 "osm_village": places["name"][village_idx],
                 "accuracy": "B" if direction in BEARINGS else "A",
                 "geometry": point,
