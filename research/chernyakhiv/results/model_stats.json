@@ -1,0 +1,85 @@
+{
+  "n_presence": 491,
+  "n_background": 5000,
+  "params": {
+    "block_km": 25.0,
+    "folds": 5,
+    "repeats": 3,
+    "window_m": 510,
+    "grid_m": 150
+  },
+  "cv": {
+    "water_only": {
+      "auc_fold_mean": 0.722,
+      "auc_fold_sd": 0.026,
+      "auc_pooled": 0.723,
+      "auc_unsnapped_sites": 0.488,
+      "auc_stage2_positions": 0.545,
+      "boyce": 0.932,
+      "sites_in_top10pct": 0.282,
+      "sites_in_top20pct": 0.474,
+      "n_folds": 15
+    },
+    "logistic": {
+      "auc_fold_mean": 0.714,
+      "auc_fold_sd": 0.033,
+      "auc_pooled": 0.717,
+      "auc_unsnapped_sites": 0.465,
+      "auc_stage2_positions": 0.541,
+      "boyce": 0.918,
+      "sites_in_top10pct": 0.264,
+      "sites_in_top20pct": 0.483,
+      "n_folds": 15
+    },
+    "gbm": {
+      "auc_fold_mean": 0.692,
+      "auc_fold_sd": 0.03,
+      "auc_pooled": 0.692,
+      "auc_unsnapped_sites": 0.466,
+      "auc_stage2_positions": 0.542,
+      "boyce": 0.978,
+      "sites_in_top10pct": 0.239,
+      "sites_in_top20pct": 0.434,
+      "n_folds": 15
+    }
+  },
+  "gbm_permutation_importance_auc": {
+    "facc_max": 0.1327,
+    "hand_ch5": 0.0219,
+    "tpi1000": 0.0099,
+    "slope_mean": 0.0092,
+    "rel_valley": 0.0068,
+    "northness": 0.0068,
+    "tpi300": 0.0059,
+    "eastness": 0.0011,
+    "dist_ch50": 0.0009,
+    "dist_ch5": 0.0005,
+    "soil_chernozem": -0.0008,
+    "soil_podzolized": -0.0011,
+    "soil_grey_forest": -0.0012
+  },
+  "logistic_linear_coef_std": {
+    "facc_max": 1.0670000314712524,
+    "dist_ch5": 0.1809999942779541,
+    "hand_ch5": -0.3840000033378601,
+    "dist_ch50": 0.18400000035762787,
+    "tpi300": -0.14100000262260437,
+    "tpi1000": 0.12700000405311584,
+    "rel_valley": 0.33399999141693115,
+    "slope_mean": 0.09099999815225601,
+    "northness": -0.14499999582767487,
+    "eastness": 0.041999999433755875,
+    "soil_chernozem": -0.0,
+    "soil_podzolized": -0.0430000014603138,
+    "soil_grey_forest": 0.04600000008940697
+  },
+  "village_auc_p90_within_2km_oof": {
+    "n_villages": 1500,
+    "n_with_sites": 298,
+    "water_only": 0.613,
+    "logistic": 0.61,
+    "gbm": 0.619,
+    "raw_catchment": 0.612
+  },
+  "suitability_area_share_ge_80": 0.13
+}
