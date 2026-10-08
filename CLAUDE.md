@@ -30,6 +30,11 @@ Stage 2 буферує ЦЮ геометрію, тож відстань міря
 - Шари OSM: landuse=residential, place=city/town/village/hamlet, admin_level=2
 - Проєкція для обчислень: EPSG:6381 (Ukraine TM, метрична)
 - Проєкція для веб: EPSG:4326 (WGS84)
+- Ґрунти: HWSD v2.0 (FAO & IIASA, 2023; CC BY-NC-SA 3.0 IGO, атрибуція у футері
+  обов'язкова). Для України це растр ~1 км з полігонів ESDB 1:1M. SMU
+  класифікується за домінантним компонентом: CH → chernozems,
+  PHgz → grey_forest, інші PH → podzolized_chernozems. SoilGrids НЕ
+  використовуємо (ML-прогноз, неточний для України).
 
 ## Команди
 - Установка: `cd preprocessing && pip install -r requirements.txt`
@@ -39,6 +44,8 @@ Stage 2 буферує ЦЮ геометрію, тож відстань міря
   python 01_extract_settlements.py    # ~2-3 хв
   python 02_compute_zones.py          # ~5-15 хв
   python 03_simplify_export.py        # ~1 хв
+  python 04_export_rivers.py
+  python 05_export_soils.py           # ~30 с, сам качає HWSD у data/raw/hwsd2/
   ```
 - Запуск веб: `cd web && python -m http.server 8000`
 - Тести: `pytest tests/`
@@ -59,11 +66,12 @@ Stage 2 буферує ЦЮ геометрію, тож відстань міря
 preprocessing/  ← Python скрипти препроцесингу (3 кроки)
 web/            ← статичний фронт; data/ — згенеровані GeoJSON
 tests/          ← pytest для геометричних інваріантів
+research/       ← дослідження (черняхівська к-ра: research/chernyakhiv/PLAN.md — статус і журнал)
 data/raw/       ← ukraine-latest.osm.pbf (gitignore)
 data/processed/ ← stage1.gpkg, stage2.gpkg (gitignore)
 ```
 
 ## Перевірки перед коммітом
-- `pytest tests/` — зелений (7 тестів)
+- `pytest tests/` — зелений (31 тест)
 - `black preprocessing/ tests/` — без diff
 - `ruff check preprocessing/ tests/` — без помилок

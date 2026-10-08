@@ -1,128 +1,175 @@
 """
-Stage 5: download SoilGrids 2.0 WRB MostProbable for Ukraine and export
-Chernozems and Phaeozems as separate GeoJSON layers.
+Stage 5: export soil layers for Ukraine from HWSD v2.0 (FAO & IIASA, 2023).
+
+HWSD v2.0 for Ukraine is a 30" (~1 km) rasterisation of the European Soil
+Database 1:1M polygons -- surveyed soil units, not ML predictions.
+
+Each raster cell holds a soil mapping unit (SMU) id; the attribute database
+lists the SMU's soil components with their area share. Every SMU is classified
+by its DOMINANT component (largest SHARE), mapped to one of three layers:
+
+    chernozems             WRB2 == "CH"               (типові, звичайні, південні)
+    podzolized_chernozems  WRB2 == "PH", not greyzemic (опідзолені чорноземи)
+    grey_forest            WRB4 == "PHgz"             (сірі та темно-сірі лісові)
+
+Output: docs/data/<layer>.geojson in EPSG:4326, clipped to the Ukraine border.
+
+Licence: HWSD v2.0 is CC BY-NC-SA 3.0 IGO; cite FAO & IIASA (2023), doi:10.4060/cc3823en.
 """
 
 from __future__ import annotations
 
 import urllib.request
+import zipfile
 from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
 import rasterio
-from rasterio.enums import Resampling
+from access_parser import AccessParser
 from rasterio.features import shapes
-from shapely.geometry import MultiPolygon, shape
+from rasterio.windows import from_bounds
+from shapely.geometry import MultiPolygon, Polygon, shape
+from shapely.ops import unary_union
 
 HERE = Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parent
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
+HWSD_DIR = RAW_DIR / "hwsd2"
+BORDER = RAW_DIR / "ua-border.geojson"
 OUT_DIR = PROJECT_ROOT / "docs" / "data"
+
+HWSD_URL = "https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/HWSD/%s"
+HWSD_RASTER = HWSD_DIR / "HWSD2.bil"
+HWSD_DB = HWSD_DIR / "HWSD2.mdb"
 
 UA_BBOX = (22.0, 44.0, 41.0, 53.0)
 
-WCS_URL = (
-    "https://maps.isric.org/mapserv?map=/map/wrb.map"
-    "&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage"
-    "&COVERAGEID=MostProbable&FORMAT=image/tiff"
-    "&SUBSET=long({w},{e})&SUBSET=lat({s},{n})"
-    "&OUTPUTCRS=http://www.opengis.net/def/crs/EPSG/0/4326"
-    "&SUBSETTINGCRS=http://www.opengis.net/def/crs/EPSG/0/4326"
-)
-RAW_WRB = RAW_DIR / "ua-wrb.tif"
+LAYERS = ["chernozems", "podzolized_chernozems", "grey_forest"]
 
-WRB_CODES = {"Chernozems": 7, "Phaeozems": 20}
-
-"""
-DOWNSCALE_FACTOR = 4       # 250 m -> 1 km. Drops vertex count ~16x.
-MIN_POLY_AREA_DEG = 1e-4   # ~1 km^2; drops noise specks
-SIMPLIFY_DEG = 0.01        # ~1 km
-COORD_PRECISION = 4
-"""
-
-DOWNSCALE_FACTOR = 1       # native resolution 250 m
-MIN_POLY_AREA_DEG = 1e-5   # ~0.1 km² мінімум (дрібні острівки залишаться)
-SIMPLIFY_DEG = 0.002       # ~200 m
-COORD_PRECISION = 5        # ~1 m precision
+BORDER_SIMPLIFY_DEG = 0.002  # ~200 m; keeps output small after clipping
+SIMPLIFY_DEG = 0.004  # ~half a pixel; removes pixel staircase
+MIN_POLY_AREA_DEG = 1e-4  # ~1 km^2 (one HWSD cell)
+COORD_PRECISION = 4  # ~10 m
 
 
-def download_if_missing(url: str, dst: Path) -> None:
-    if dst.exists() and dst.stat().st_size > 1024:
-        print("  %s exists, skip" % dst.name)
-        return
-    print("Downloading %s ..." % dst.name)
-    urllib.request.urlretrieve(url, dst)
+def download_hwsd() -> None:
+    HWSD_DIR.mkdir(parents=True, exist_ok=True)
+    for archive, member in (("HWSD2_RASTER.zip", HWSD_RASTER), ("HWSD2_DB.zip", HWSD_DB)):
+        if member.exists():
+            print(f"  {member.name} exists, skip")
+            continue
+        zip_path = HWSD_DIR / archive
+        print(f"Downloading {archive} ...")
+        urllib.request.urlretrieve(HWSD_URL % archive, zip_path)
+        with zipfile.ZipFile(zip_path) as zf:
+            for info in zf.infolist():
+                if info.is_dir():
+                    continue
+                # Flatten archive folders; never trust member paths.
+                (HWSD_DIR / Path(info.filename).name).write_bytes(zf.read(info))
+        zip_path.unlink()
 
 
-def downscale(arr: np.ndarray, factor: int) -> np.ndarray:
-    """Block-mode downsample: take dominant code in each factor x factor block."""
-    h, w = arr.shape
-    h2 = (h // factor) * factor
-    w2 = (w // factor) * factor
-    cropped = arr[:h2, :w2]
-    blocks = cropped.reshape(h2 // factor, factor, w2 // factor, factor)
-    # Mode along the two block axes: collapse to (h2//factor, w2//factor).
-    # For categorical data simple max isn't right, but for our purpose
-    # picking the upper-left pixel of each block is fast and good enough.
-    return blocks[:, 0, :, 0]
+def classify(wrb2: str | None, wrb4: str | None) -> str | None:
+    if wrb2 == "CH":
+        return "chernozems"
+    if wrb4 == "PHgz":
+        return "grey_forest"
+    if wrb2 == "PH":
+        return "podzolized_chernozems"
+    return None
 
 
-def vectorise(raster: np.ndarray, transform, code: int):
-    mask = (raster == code)
-    n = int(mask.sum())
-    if n == 0:
-        return None, 0
+def smu_classes() -> dict[int, tuple[str, str]]:
+    """SMU id -> (layer, WRB4 code) of its dominant component."""
+    smu = AccessParser(str(HWSD_DB)).parse_table("HWSD2_SMU")
+    dominant: dict[int, tuple[float, str | None, str | None]] = {}
+    for sid, share, wrb2, wrb4 in zip(
+        smu["HWSD2_SMU_ID"], smu["SHARE"], smu["WRB2"], smu["WRB4"], strict=True
+    ):
+        if sid not in dominant or share > dominant[sid][0]:
+            dominant[sid] = (share, wrb2, wrb4)
+    out = {}
+    for sid, (_, wrb2, wrb4) in dominant.items():
+        layer = classify(wrb2, wrb4)
+        if layer is not None:
+            out[int(sid)] = (layer, wrb4)
+    return out
+
+
+def load_border():
+    border = gpd.read_file(BORDER)
+    border = border[border.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
+    if border.empty:
+        raise SystemExit(f"No polygon geometry in {BORDER.name}")
+    return unary_union(border.geometry.values).simplify(BORDER_SIMPLIFY_DEG)
+
+
+def vectorise(mask: np.ndarray, transform) -> list[Polygon]:
     polys = []
     for geom_dict, val in shapes(mask.astype("uint8"), mask=mask, transform=transform):
         if val == 1:
             poly = shape(geom_dict)
             if poly.area >= MIN_POLY_AREA_DEG:
                 polys.append(poly)
-    if not polys:
-        return None, n
+    return polys
 
-    # shapes() already returns disjoint polygons -> wrap as MultiPolygon
-    # (NO unary_union: it's O(N^2) for N polygons and we don't need it).
-    geom = MultiPolygon(polys) if len(polys) > 1 else polys[0]
-    geom = geom.simplify(SIMPLIFY_DEG, preserve_topology=True)
-    return geom, n
+
+def as_multipolygon(geom) -> MultiPolygon:
+    parts = getattr(geom, "geoms", [geom])
+    return MultiPolygon(
+        [p for p in parts if p.geom_type == "Polygon" and p.area >= MIN_POLY_AREA_DEG]
+    )
 
 
 def main() -> None:
-    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    for f in (BORDER,):
+        if not f.exists():
+            raise SystemExit(f"Missing {f}.")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    download_hwsd()
 
-    w, s, e, n = UA_BBOX
-    download_if_missing(WCS_URL.format(w=w, s=s, e=e, n=n), RAW_WRB)
+    print("Loading HWSD raster window ...")
+    with rasterio.open(HWSD_RASTER) as src:
+        window = from_bounds(*UA_BBOX, transform=src.transform).round_offsets().round_lengths()
+        smu_ids = src.read(1, window=window)
+        transform = src.window_transform(window)
+    print(f"  window shape {smu_ids.shape}")
 
-    print("Loading raster ...")
-    with rasterio.open(RAW_WRB) as src:
-        wrb = src.read(1)
-        transform = src.transform
+    print("Reading SMU attributes ...")
+    classes = smu_classes()
 
-    print("  original shape %s" % (wrb.shape,))
-    if DOWNSCALE_FACTOR > 1:
-        wrb = downscale(wrb, DOWNSCALE_FACTOR)
-        # Adjust transform: pixel size grows by factor.
-        transform = transform * transform.scale(DOWNSCALE_FACTOR, DOWNSCALE_FACTOR)
-        print("  downscaled shape %s" % (wrb.shape,))
+    print("Loading Ukraine border ...")
+    border = load_border()
 
-    for class_name, code in WRB_CODES.items():
-        print("Vectorising %s (code %d) ..." % (class_name, code))
-        geom, n_pixels = vectorise(wrb, transform, code)
-        if geom is None:
-            print("  -> 0 pixels")
+    for layer in LAYERS:
+        ids = [sid for sid, (lyr, _) in classes.items() if lyr == layer]
+        mask = np.isin(smu_ids, ids)
+        codes = sorted({classes[int(s)][1] for s in np.unique(smu_ids[mask])})
+        print(f"Vectorising {layer} ({', '.join(codes)}) ...")
+        polys = vectorise(mask, transform)
+        if not polys:
+            print("  -> 0 polygons, skip")
             continue
+        # shapes() returns disjoint polygons, so MultiPolygon needs no union.
+        geom = MultiPolygon(polys).simplify(SIMPLIFY_DEG, preserve_topology=True)
+        geom = as_multipolygon(geom.intersection(border))
+
         gdf = gpd.GeoDataFrame(
-            {"class": [class_name]}, geometry=[geom], crs="EPSG:4326",
+            {
+                "class": [layer],
+                "wrb": [", ".join(codes)],
+                "source": ["HWSD v2.0, FAO & IIASA 2023, CC BY-NC-SA 3.0 IGO"],
+            },
+            geometry=[geom],
+            crs="EPSG:4326",
         )
-        out_path = OUT_DIR / ("%s.geojson" % class_name.lower())
-        if out_path.exists():
-            out_path.unlink()
+        out_path = OUT_DIR / f"{layer}.geojson"
+        out_path.unlink(missing_ok=True)
         gdf.to_file(out_path, driver="GeoJSON", COORDINATE_PRECISION=COORD_PRECISION)
-        print("  -> %s: %d px, %d KB" %
-              (out_path.name, n_pixels, out_path.stat().st_size // 1024))
+        size_kb = out_path.stat().st_size // 1024
+        print(f"  -> {out_path.name}: {len(geom.geoms)} polygons, {size_kb} KB")
 
 
 if __name__ == "__main__":

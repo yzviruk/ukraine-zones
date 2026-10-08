@@ -94,7 +94,7 @@ const STREAM_STYLE = { color: "#1f77c4", weight: 1.5, opacity: 0.85 };
 let riversLayer = null;
 let streamsLayer = null;
 
-async function loadAndToggle(file, style, currentRef, checked) {
+async function loadAndToggle(file, geojsonOptions, currentRef, checked) {
   if (checked) {
     if (!currentRef.layer) {
       const res = await fetch(`data/${file}`);
@@ -103,7 +103,7 @@ async function loadAndToggle(file, style, currentRef, checked) {
         return;
       }
       const geojson = await res.json();
-      currentRef.layer = L.geoJSON(geojson, { style });
+      currentRef.layer = L.geoJSON(geojson, geojsonOptions);
     }
     if (!map.hasLayer(currentRef.layer)) currentRef.layer.addTo(map);
   } else if (currentRef.layer && map.hasLayer(currentRef.layer)) {
@@ -116,30 +116,66 @@ const streamsRef = { layer: null };
 
 const toggleRivers = document.getElementById("toggle-rivers");
 toggleRivers.addEventListener("change", () =>
-  loadAndToggle("rivers.geojson", RIVER_STYLE, riversRef, toggleRivers.checked)
+  loadAndToggle("rivers.geojson", { style: RIVER_STYLE }, riversRef, toggleRivers.checked)
 );
 
 const toggleStreams = document.getElementById("toggle-streams");
 toggleStreams.addEventListener("change", () =>
-  loadAndToggle("streams.geojson", STREAM_STYLE, streamsRef, toggleStreams.checked)
+  loadAndToggle("streams.geojson", { style: STREAM_STYLE }, streamsRef, toggleStreams.checked)
 );
 
 // Auto-load rivers since checkbox starts checked.
-loadAndToggle("rivers.geojson", RIVER_STYLE, riversRef, true);
+loadAndToggle("rivers.geojson", { style: RIVER_STYLE }, riversRef, true);
 
-// Soils layers
-const CHERNOZEM_STYLE = { color: "#3a2818", weight: 0, fillColor: "#3a2818", fillOpacity: 0.45 };
-const PHAEOZEM_STYLE  = { color: "#7a5a3a", weight: 0, fillColor: "#7a5a3a", fillOpacity: 0.35 };
+// Soils layers (HWSD v2.0, see preprocessing/05_export_soils.py)
+const SOIL_LAYERS = [
+  { id: "chernozems", color: "#2b1d12" },
+  { id: "podzolized_chernozems", color: "#6b4a2b" },
+  { id: "grey_forest", color: "#8a8278" },
+];
 
-const chernozemsRef = { layer: null };
-const phaeozemsRef  = { layer: null };
+for (const { id, color } of SOIL_LAYERS) {
+  const style = { color, weight: 0, fillColor: color, fillOpacity: 0.45 };
+  const ref = { layer: null };
+  const toggle = document.getElementById(`toggle-${id.replace(/_/g, "-")}`);
+  toggle.addEventListener("change", () =>
+    loadAndToggle(`${id}.geojson`, { style }, ref, toggle.checked)
+  );
+}
 
-const toggleChernozems = document.getElementById("toggle-chernozems");
-toggleChernozems.addEventListener("change", () =>
-  loadAndToggle("chernozems.geojson", CHERNOZEM_STYLE, chernozemsRef, toggleChernozems.checked)
-);
+// Chernyakhiv-culture sites (research/chernyakhiv). One point per village:
+// exact site locations are deliberately not published (anti-looting).
+const CHERNYAKHIV_COLOR = "#c2410c";
+const chernyakhivRef = { layer: null };
+const chernyakhivOptions = {
+  pointToLayer: (feature, latlng) => {
+    const p = feature.properties;
+    return L.circleMarker(latlng, {
+      radius: 3 + 2 * Math.sqrt(p.settlements + p.burials),
+      color: "#7c2d12",
+      weight: 1,
+      fillColor: CHERNYAKHIV_COLOR,
+      fillOpacity: 0.8,
+    });
+  },
+  onEachFeature: (feature, layer) => {
+    const p = feature.properties;
+    const burials = p.burials ? `, могильників: ${p.burials}` : "";
+    layer.bindPopup(
+      `<b>${p.village}</b> (${p.district} р-н)<br>` +
+        `Поселень: ${p.settlements}${burials}<br>` +
+        `№ за каталогом: ${p.catalogue_no}<br>` +
+        `<small>Точка — центр села; пам'ятки поруч, у межах ~1–2 км.<br>${p.source}</small>`
+    );
+  },
+};
 
-const togglePhaeozems = document.getElementById("toggle-phaeozems");
-togglePhaeozems.addEventListener("change", () =>
-  loadAndToggle("phaeozems.geojson", PHAEOZEM_STYLE, phaeozemsRef, togglePhaeozems.checked)
+const toggleChernyakhiv = document.getElementById("toggle-chernyakhiv");
+toggleChernyakhiv.addEventListener("change", () =>
+  loadAndToggle(
+    "chernyakhiv_villages.geojson",
+    chernyakhivOptions,
+    chernyakhivRef,
+    toggleChernyakhiv.checked
+  )
 );

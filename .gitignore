@@ -1,6 +1,9 @@
 # Data: too large to commit
 data/raw/*.pbf
 data/processed/*.gpkg
+# Copyrighted catalogue (Магомедов 2022) and data extracted from it
+data/raw/*.pdf
+data/processed/chernyakhiv_*
 
 # Python
 __pycache__/
@@ -29,6 +32,8 @@ package-lock.json
 data/raw/ua-residential.geojson
 data/raw/ua-places.geojson
 data/raw/ua-border.geojson
+data/raw/ua-rivers.geojson
+data/raw/hwsd2/
 
 # wrangler files
 .wrangler

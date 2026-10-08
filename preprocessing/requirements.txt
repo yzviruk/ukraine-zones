@@ -7,3 +7,6 @@ fiona>=1.9
 pytest>=8.0
 black>=24.0
 ruff>=0.4
+numpy>=1.26
+rasterio>=1.3
+access-parser>=0.0.5
