@@ -70,6 +70,7 @@ def test_parse_entry_fields():
     assert (row["length_m"], row["width_m"]) == ("400", "100")
     assert row["year_found"] == "1982"
     assert row["protection_no"] == "59"
+    assert row["text"] == text
     assert row["ploughed"] == 1
     assert row["lf_plateau"] == row["lf_slope"] == row["w_stream"] == row["w_pond"] == 1
 

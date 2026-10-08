@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Черняхів: уточнення положення</title>
-  <!-- LOCAL ONLY: exact site positions (decision 1 in research/chernyakhiv/PLAN.md) -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>Черняхів: точні дані</title>
+  <!-- Exact site positions: local, or encrypted on Pages (decision 1 in research/chernyakhiv/PLAN.md) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <style>
     :root { --ink: #1d1d1b; --muted: #5c5b57; --panel: #ffffffee; --line: #d9d8d3;
@@ -28,14 +29,36 @@
     .leaflet-popup-content dt { color: var(--muted); }
     .leaflet-popup-content dd { margin: 0; }
     .desc { color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 4px; }
+    .fulltext { font-size: 12px; max-height: 220px; overflow: auto; white-space: pre-wrap; margin-top: 4px; }
+    .leaflet-popup-content details summary { cursor: pointer; color: var(--dem); margin-top: 6px; }
+    #lock { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center;
+            background: #f4f3efee; }
+    #lock.hidden { display: none; }
+    #lock form { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 18px 20px;
+                 width: min(340px, calc(100% - 32px)); box-shadow: 0 4px 16px #0002; }
+    #lock h2 { font-size: 16px; margin: 0 0 6px; }
+    #lock p { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
+    #lock input { width: 100%; box-sizing: border-box; padding: 8px; font-size: 14px; }
+    #lock button { margin-top: 10px; padding: 7px 14px; font-size: 14px; }
+    #lock .err { color: #b00020; min-height: 1.2em; margin: 6px 0 0; }
     @media (max-width: 600px) { .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: 20px; max-height: 45%; } }
   </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="lock" class="hidden">
+  <form id="lockForm">
+    <h2>Черняхівська культура: точні дані</h2>
+    <p>Закритий доступ. Точні місця пам'яток і тексти каталогу (© Магомедов Б. В., ІА НАН
+      України, 2022) — лише для дослідницької роботи, не поширювати.</p>
+    <input type="password" id="pw" autocomplete="current-password" placeholder="Пароль" autofocus>
+    <button type="submit">Відкрити</button>
+    <p class="err" id="pwErr"></p>
+  </form>
+</div>
 <div class="panel">
-  <h1>Уточнення положення пам'яток</h1>
-  <p>Локально, не публікувати: точні місця.</p>
+  <h1>Черняхівська культура: точні дані</h1>
+  <p>Точні місця пам'яток — не поширювати.</p>
   <p class="stats" id="stats"></p>
   <strong>Прив'язка</strong>
   <label><input type="checkbox" data-snap="named" checked><span class="sw" style="background:var(--named)"></span>за назвою водойми (OSM)</label>
@@ -48,11 +71,17 @@
   <label><span class="bar" style="background:rgb(110,170,230)"></span>1–10 км²</label>
   <label><span class="bar" style="background:rgb(40,110,210)"></span>10–100 км²</label>
   <label><span class="bar" style="background:rgb(10,50,150)"></span>≥ 100 км²</label>
-  <p>Шари (відмивка, водотоки, підкладка) — праворуч угорі.</p>
+  <p><strong>Придатність</strong> (модель «водозбір», 150 м; шар праворуч угорі):</p>
+  <label><span class="sw" style="background:rgb(118,42,131);border-radius:2px"></span>найвищі 3 % доступних місць</label>
+  <label><span class="sw" style="background:rgb(153,112,171);border-radius:2px"></span>90–97 %</label>
+  <label><span class="sw" style="background:rgb(194,165,207);border-radius:2px"></span>75–90 %</label>
+  <label><span class="sw" style="background:rgb(231,212,232);border-radius:2px"></span>50–75 %</label>
+  <p>Шари (відмивка, водотоки, придатність, підкладка) — праворуч угорі.</p>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
 const OVERLAYS = /*OVERLAYS*/null;
+const MODE = /*MODE*/"plain";  // "encrypted": sites.enc.json, see 05b_viewer.py
 const COLORS = { named: "#1a9e5c", dem: "#2a78d6", none: "#8a8984" };
 const SNAP_LABEL = { named: "за назвою (OSM)", dem: "за типом (DEM)", none: "немає" };
 
@@ -86,12 +115,17 @@ fetch("waterways.geojson").then(r => r.json()).then(g => {
 });
 
 const siteLayer = L.layerGroup().addTo(map);
-L.control.layers(bases, {
+const overlayLayers = {
   "Відмивка рельєфу (DEM)": hillshade,
   "Водотоки з DEM (≥ 1 км²)": channels,
   "Водотоки OSM": waterways,
-  "Пам'ятки": siteLayer,
-}, { collapsed: true }).addTo(map);
+};
+if (OVERLAYS.suitability) {
+  overlayLayers["Придатність (модель, 150 м)"] =
+    L.imageOverlay("suitability.png", OVERLAYS.suitability, { opacity: 0.75, pane: "raster" });
+}
+overlayLayers["Пам'ятки"] = siteLayer;
+L.control.layers(bases, overlayLayers, { collapsed: true }).addTo(map);
 L.control.scale({ imperial: false }).addTo(map);
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -104,7 +138,9 @@ function popup(p) {
     ["Зсув", p.shift_m ? Math.round(p.shift_m) + " м" : null],
   ].filter(([, v]) => v != null && v !== "");
   return `<strong>№ ${p.no}</strong><dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` +
-         `<div class="desc">${esc(p.desc)}</div>`;
+         (p.text  // the full entry starts with the short description
+           ? `<details open><summary>Текст каталогу</summary><div class="fulltext">${esc(p.text)}</div></details>`
+           : `<div class="desc">${esc(p.desc)}</div>`);
 }
 
 let features = [];
@@ -137,10 +173,44 @@ function render() {
   document.getElementById("stats").textContent = `Показано пам'яток: ${n} з 491`;
 }
 
-fetch("sites.geojson").then(r => r.json()).then(g => {
-  features = g.features;
+function show(geojson) {
+  features = geojson.features;
   render();
-});
+}
+
+// Encrypted mode: gzip -> AES-256-GCM, key = PBKDF2-SHA256(password) (05b_viewer.py).
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function decrypt(enc, password) {
+  const base = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64(enc.salt), iterations: enc.iterations, hash: "SHA-256" },
+    base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const zipped = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(enc.iv) }, key, b64(enc.ct));
+  const stream = new Blob([zipped]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return JSON.parse(await new Response(stream).text());
+}
+
+if (MODE === "encrypted") {
+  const lock = document.getElementById("lock");
+  const err = document.getElementById("pwErr");
+  lock.classList.remove("hidden");
+  const encPromise = fetch("sites.enc.json", { cache: "no-store" }).then(r => r.json());
+  document.getElementById("lockForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    err.textContent = "Перевірка…";
+    try {
+      show(await decrypt(await encPromise, document.getElementById("pw").value));
+      lock.classList.add("hidden");
+      err.textContent = "";
+    } catch (ex) {
+      console.error(ex);
+      err.textContent = "Невірний пароль.";
+    }
+  });
+} else {
+  fetch("sites.geojson").then(r => r.json()).then(show);
+}
 document.querySelectorAll(".panel input").forEach(el => el.addEventListener("change", render));
 document.getElementById("go").addEventListener("click", () => {
   const m = byNo[+document.getElementById("findNo").value];

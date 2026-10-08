@@ -44,3 +44,6 @@ data/raw/hwsd2/
 !.dev.vars.example
 .env*
 !.env.example
+
+# Encrypted Chernyakhiv viewer: only ciphertext may be committed
+docs/private/sites.geojson

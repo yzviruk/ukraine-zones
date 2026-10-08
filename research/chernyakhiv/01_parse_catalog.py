@@ -189,6 +189,7 @@ def parse_entry(no: int, text: str) -> dict:
         "year_found": first(r"(?:Вияв|Відкри|Обстеж)\w*\b.{0,80}?\b(1[89]\d\d|20[0-2]\d) р", body),
         "protection_no": first(r"охоронний № (\d+)", text),
         "desc": desc,
+        "text": text,  # the full catalogue entry, for the private viewer
     }
     for key, pat in LANDFORMS.items():
         row["lf_" + key] = int(bool(re.search(pat, low)))
