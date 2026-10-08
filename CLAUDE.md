@@ -53,6 +53,9 @@ Stage 2 буферує ЦЮ геометрію, тож відстань міря
 ## Конвенції
 - Python: black + ruff
 - JS: vanilla, без транспіляції
+- Сайт: GitHub Pages з `docs/` гілки master (https://yzviruk.github.io/ukraine-zones/).
+  Після зміни `docs/app.js` чи `docs/styles.css` — оновити `?v=` у `docs/index.html`
+  (Pages кешує асети на 10 хв, інакше браузер бере старий JS).
 - Геометрію зберігаємо у EPSG:4326 у фінальних GeoJSON
 
 ## Що НЕ робимо без явного запиту
