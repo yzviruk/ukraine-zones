@@ -139,18 +139,23 @@ for (const { id, color } of SOIL_LAYERS) {
   const ref = { layer: null };
   const toggle = document.getElementById(`toggle-${id.replace(/_/g, "-")}`);
   toggle.addEventListener("change", () =>
-    loadAndToggle(`${id}.geojson`, { style }, ref, toggle.checked)
+    // Soils have no popups: let clicks pass through to the markers below/above.
+    loadAndToggle(`${id}.geojson`, { style, interactive: false }, ref, toggle.checked)
   );
 }
 
 // Chernyakhiv-culture sites (research/chernyakhiv). One point per village:
 // exact site locations are deliberately not published (anti-looting).
+// Own pane above all polygons, so soil layers never cover the markers.
+map.createPane("sites");
+map.getPane("sites").style.zIndex = 450;
 const CHERNYAKHIV_COLOR = "#c2410c";
 const chernyakhivRef = { layer: null };
 const chernyakhivOptions = {
   pointToLayer: (feature, latlng) => {
     const p = feature.properties;
     return L.circleMarker(latlng, {
+      pane: "sites",
       radius: 3 + 2 * Math.sqrt(p.settlements + p.burials),
       color: "#7c2d12",
       weight: 1,
