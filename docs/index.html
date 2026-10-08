@@ -8,7 +8,7 @@
         crossorigin="">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
-  <link rel="stylesheet" href="styles.css?v=2026-10-08b">
+  <link rel="stylesheet" href="styles.css?v=2026-10-08c">
 </head>
 <body>
   <div id="map"></div>
@@ -47,6 +47,17 @@
   <input type="checkbox" id="toggle-chernyakhiv">
   Черняхівська культура: відомі пам'ятки (Вінницька обл.)
 </label>
+<label class="layer-toggle">
+  <input type="checkbox" id="toggle-chernyakhiv-potential">
+  Черняхівська культура: придатні місця (модель)
+</label>
+<div id="potential-legend" class="legend hidden">
+  <div><span class="swatch" style="background:#6a3d9a"></span>висока (10 % площі області)</div>
+  <div><span class="swatch" style="background:#1b9e77"></span>висока, далі 3 км від сіл з відомими пам'ятками</div>
+  <div><span class="swatch" style="background:#cab2d6"></span>підвищена (наступні 15 %)</div>
+  <p>Оцінка лише за розміром найближчого водотоку (клітинки 2 км). Показує
+    придатність місцевості, а не наявність пам'яток; помірна точність.</p>
+</div>
     <p class="footer">
       Дані: <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>;
       ґрунти: <a href="https://doi.org/10.4060/cc3823en">© FAO &amp; IIASA, HWSD v2.0</a>
@@ -59,6 +70,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
-  <script src="app.js?v=2026-10-08b"></script>
+  <script src="app.js?v=2026-10-08c"></script>
 </body>
 </html>

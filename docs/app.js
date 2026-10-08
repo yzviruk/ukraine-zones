@@ -184,3 +184,37 @@ toggleChernyakhiv.addEventListener("change", () =>
     toggleChernyakhiv.checked
   )
 );
+
+// Chernyakhiv potential (research/chernyakhiv/05d_map.py): model of landscape
+// suitability on 2 km cells. Coarse on purpose, like the sites layer.
+const POTENTIAL_COLORS = { high: "#6a3d9a", candidate: "#1b9e77", elevated: "#cab2d6" };
+const potentialRef = { layer: null };
+const potentialOptions = {
+  style: (feature) => {
+    const p = feature.properties;
+    const color = POTENTIAL_COLORS[p.candidate ? "candidate" : p.class];
+    return { color, weight: 0, fillColor: color, fillOpacity: p.class === "high" ? 0.6 : 0.45 };
+  },
+  onEachFeature: (feature, layer) => {
+    const p = feature.properties;
+    const note = p.candidate
+      ? "Сіл з відомими пам'ятками ближче ~3 км немає: або прогалина, або тут не шукали."
+      : "";
+    layer.bindPopup(
+      `<b>Придатність: ${p.label}</b><br>${note}` +
+        `<br><small>Модель за розміром найближчого водотоку; клітинки 2 км. ` +
+        `Не означає, що тут є пам'ятки.<br>${p.source}</small>`
+    );
+  },
+};
+const togglePotential = document.getElementById("toggle-chernyakhiv-potential");
+const potentialLegend = document.getElementById("potential-legend");
+togglePotential.addEventListener("change", () => {
+  potentialLegend.classList.toggle("hidden", !togglePotential.checked);
+  loadAndToggle(
+    "chernyakhiv_potential.geojson",
+    potentialOptions,
+    potentialRef,
+    togglePotential.checked
+  );
+});
