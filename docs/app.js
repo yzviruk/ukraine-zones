@@ -127,11 +127,15 @@ toggleStreams.addEventListener("change", () =>
 // Auto-load rivers since checkbox starts checked.
 loadAndToggle("rivers.geojson", { style: RIVER_STYLE }, riversRef, true);
 
-// Soils layers (HWSD v2.0, see preprocessing/05_export_soils.py)
+// Soil layers from two sources that disagree in places, so both are offered:
+// HWSD v2.0 (surveyed 1:1M map, ~1 km; preprocessing/05_export_soils.py) in
+// browns, SoilGrids 2.0 (model prediction, 250 m; 06_export_soilgrids.py) in teals.
 const SOIL_LAYERS = [
   { id: "chernozems", color: "#2b1d12" },
   { id: "podzolized_chernozems", color: "#6b4a2b" },
   { id: "grey_forest", color: "#8a8278" },
+  { id: "soilgrids_chernozems", color: "#0f4c5c" },
+  { id: "soilgrids_phaeozems", color: "#4fa39a" },
 ];
 
 for (const { id, color } of SOIL_LAYERS) {

@@ -49,3 +49,17 @@ def test_window_max_ignores_nan():
     a[:3, :3] = np.nan  # outside the oblast stays nodata
     out = model.window_max(a)
     assert out[20, 25] == 5.0 and out[5, 5] == 0.0 and np.isnan(out[0, 0])
+
+
+def test_soil_zone_mean_ignores_nodata_and_uses_pixel_shape():
+    path = PROJECT_ROOT / "research" / "chernyakhiv" / "03c_soilgrids.py"
+    spec = importlib.util.spec_from_file_location("soilgrids", path)
+    soil = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(soil)
+    a = np.zeros((21, 21), dtype="float32")
+    a[:, 11:] = 100.0
+    a[10, 10] = np.nan
+    out = soil.zone_mean(a, (200.0, 100.0), 300)  # box: 3 rows x 7 columns
+    assert out[10, 10] == pytest.approx(100 * 9 / 20)  # the NaN cell itself is skipped
+    assert out[10, 3] == 0 and out[10, 17] == 100
+    assert np.isnan(soil.zone_mean(np.full((5, 5), np.nan, dtype="float32"), (100, 100), 100)).all()

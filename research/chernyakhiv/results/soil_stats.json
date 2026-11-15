@@ -1,0 +1,210 @@
+{
+  "site_level": {
+    "n_sites": 491,
+    "n_background": 5000,
+    "univariate": {
+      "clay_zone": {
+        "auc": 0.472,
+        "p": 0.042,
+        "median_sites": 319.9,
+        "median_other": 320.6
+      },
+      "phh2o_zone": {
+        "auc": 0.53,
+        "p": 0.026,
+        "median_sites": 67.1,
+        "median_other": 67.0
+      },
+      "sand_zone": {
+        "auc": 0.544,
+        "p": 0.0013,
+        "median_sites": 224.1,
+        "median_other": 219.3
+      },
+      "soc_zone": {
+        "auc": 0.49,
+        "p": 0.47,
+        "median_sites": 193.4,
+        "median_other": 194.4
+      },
+      "wrb_Chernozems": {
+        "auc": 0.533,
+        "p": 0.015,
+        "median_sites": 26.0,
+        "median_other": 25.0
+      },
+      "wrb_Chernozems_zone": {
+        "auc": 0.546,
+        "p": 0.00074,
+        "median_sites": 26.7,
+        "median_other": 25.9
+      },
+      "wrb_Fluvisols": {
+        "auc": 0.459,
+        "p": 0.0026,
+        "median_sites": 5.0,
+        "median_other": 5.0
+      },
+      "wrb_Fluvisols_zone": {
+        "auc": 0.466,
+        "p": 0.013,
+        "median_sites": 4.8,
+        "median_other": 4.9
+      },
+      "wrb_Gleysols": {
+        "auc": 0.517,
+        "p": 0.2,
+        "median_sites": 4.0,
+        "median_other": 4.0
+      },
+      "wrb_Gleysols_zone": {
+        "auc": 0.508,
+        "p": 0.55,
+        "median_sites": 4.0,
+        "median_other": 3.9
+      },
+      "wrb_Luvisols": {
+        "auc": 0.426,
+        "p": 5.3e-08,
+        "median_sites": 10.0,
+        "median_other": 11.0
+      },
+      "wrb_Luvisols_zone": {
+        "auc": 0.452,
+        "p": 0.00043,
+        "median_sites": 10.3,
+        "median_other": 11.0
+      },
+      "wrb_Phaeozems": {
+        "auc": 0.537,
+        "p": 0.0073,
+        "median_sites": 21.0,
+        "median_other": 20.0
+      },
+      "wrb_Phaeozems_zone": {
+        "auc": 0.548,
+        "p": 0.00045,
+        "median_sites": 21.0,
+        "median_other": 20.4
+      }
+    },
+    "logistic_cv": {
+      "water_only": {
+        "auc": 0.728,
+        "sd": 0.031,
+        "auc_unsnapped_sites": 0.496
+      },
+      "water+hwsd": {
+        "auc": 0.721,
+        "sd": 0.036,
+        "auc_unsnapped_sites": 0.483
+      },
+      "water+soilgrids_point": {
+        "auc": 0.725,
+        "sd": 0.032,
+        "auc_unsnapped_sites": 0.489
+      },
+      "water+soilgrids_zone": {
+        "auc": 0.721,
+        "sd": 0.034,
+        "auc_unsnapped_sites": 0.482
+      },
+      "water+properties_zone": {
+        "auc": 0.738,
+        "sd": 0.035,
+        "auc_unsnapped_sites": 0.522
+      },
+      "water+all_soil": {
+        "auc": 0.73,
+        "sd": 0.036,
+        "auc_unsnapped_sites": 0.514
+      },
+      "soilgrids_zone_only": {
+        "auc": 0.588,
+        "sd": 0.045,
+        "auc_unsnapped_sites": 0.553
+      }
+    },
+    "boosting_cv": {
+      "water_only": {
+        "auc": 0.704,
+        "sd": 0.029
+      },
+      "water+all_soil": {
+        "auc": 0.721,
+        "sd": 0.034
+      }
+    }
+  },
+  "village_level": {
+    "n_villages_with_sites": 299,
+    "n_other_villages": 1202,
+    "zone_m": 2000,
+    "univariate": {
+      "wrb_Chernozems_zone": {
+        "auc": 0.516,
+        "p": 0.4,
+        "median_sites": 26.5,
+        "median_other": 26.5
+      },
+      "wrb_Phaeozems_zone": {
+        "auc": 0.495,
+        "p": 0.78,
+        "median_sites": 20.4,
+        "median_other": 20.6
+      },
+      "wrb_Luvisols_zone": {
+        "auc": 0.473,
+        "p": 0.15,
+        "median_sites": 10.6,
+        "median_other": 11.1
+      },
+      "wrb_Fluvisols_zone": {
+        "auc": 0.513,
+        "p": 0.47,
+        "median_sites": 4.9,
+        "median_other": 4.9
+      },
+      "wrb_Gleysols_zone": {
+        "auc": 0.529,
+        "p": 0.12,
+        "median_sites": 4.0,
+        "median_other": 3.9
+      },
+      "clay_zone": {
+        "auc": 0.505,
+        "p": 0.77,
+        "median_sites": 322.9,
+        "median_other": 321.0
+      },
+      "sand_zone": {
+        "auc": 0.542,
+        "p": 0.023,
+        "median_sites": 222.4,
+        "median_other": 217.9
+      },
+      "soc_zone": {
+        "auc": 0.502,
+        "p": 0.94,
+        "median_sites": 192.7,
+        "median_other": 193.5
+      },
+      "phh2o_zone": {
+        "auc": 0.525,
+        "p": 0.19,
+        "median_sites": 67.0,
+        "median_other": 66.9
+      }
+    },
+    "logistic_cv": {
+      "soilgrids_zone": {
+        "auc": 0.555,
+        "sd": 0.049
+      },
+      "classes_zone": {
+        "auc": 0.532,
+        "sd": 0.047
+      }
+    }
+  }
+}

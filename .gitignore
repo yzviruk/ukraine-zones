@@ -37,6 +37,7 @@ data/raw/ua-places.geojson
 data/raw/ua-border.geojson
 data/raw/ua-rivers.geojson
 data/raw/hwsd2/
+data/raw/soilgrids/
 
 # wrangler files
 .wrangler

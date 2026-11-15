@@ -125,3 +125,18 @@ html, body {
   color: #777;
   font-size: 11px;
 }
+
+#panel .layer-note {
+  margin: 8px 0 2px;
+  color: #555;
+  font-size: 12px;
+}
+
+.layer-toggle .swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}

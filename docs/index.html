@@ -8,7 +8,7 @@
         crossorigin="">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
-  <link rel="stylesheet" href="styles.css?v=2026-10-08c">
+  <link rel="stylesheet" href="styles.css?v=2026-11-15a">
 </head>
 <body>
   <div id="map"></div>
@@ -43,6 +43,16 @@
   <input type="checkbox" id="toggle-grey-forest">
   Сірі та темно-сірі лісові ґрунти
 </label>
+<p class="layer-note">Ґрунти за SoilGrids — детальніше (250 м), але це модельний
+  прогноз, а не знята карта; місцями розходиться з шарами вище.</p>
+<label class="layer-toggle">
+  <input type="checkbox" id="toggle-soilgrids-chernozems">
+  <span class="swatch" style="background:#0f4c5c"></span>Чорноземи (SoilGrids)
+</label>
+<label class="layer-toggle">
+  <input type="checkbox" id="toggle-soilgrids-phaeozems">
+  <span class="swatch" style="background:#4fa39a"></span>Файоземи: опідзолені, темно-сірі (SoilGrids)
+</label>
 <label class="layer-toggle">
   <input type="checkbox" id="toggle-chernyakhiv">
   Черняхівська культура: відомі пам'ятки (Вінницька обл.)
@@ -61,7 +71,9 @@
     <p class="footer">
       Дані: <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>;
       ґрунти: <a href="https://doi.org/10.4060/cc3823en">© FAO &amp; IIASA, HWSD v2.0</a>
-      (<a href="https://creativecommons.org/licenses/by-nc-sa/3.0/igo/">CC BY-NC-SA 3.0 IGO</a>);
+      (<a href="https://creativecommons.org/licenses/by-nc-sa/3.0/igo/">CC BY-NC-SA 3.0 IGO</a>)
+      і <a href="https://doi.org/10.5194/soil-7-217-2021">SoilGrids 2.0, © ISRIC</a>
+      (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>);
       черняхівська к-ра: <a href="http://www.vgosau.kiev.ua/load_books/Magomedov_2022.pdf">Магомедов Б. В., 2022</a>
     </p>
   </div>
@@ -70,6 +82,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
-  <script src="app.js?v=2026-10-08c"></script>
+  <script src="app.js?v=2026-11-15a"></script>
 </body>
 </html>

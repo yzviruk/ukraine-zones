@@ -33,8 +33,12 @@ Stage 2 буферує ЦЮ геометрію, тож відстань міря
 - Ґрунти: HWSD v2.0 (FAO & IIASA, 2023; CC BY-NC-SA 3.0 IGO, атрибуція у футері
   обов'язкова). Для України це растр ~1 км з полігонів ESDB 1:1M. SMU
   класифікується за домінантним компонентом: CH → chernozems,
-  PHgz → grey_forest, інші PH → podzolized_chernozems. SoilGrids НЕ
-  використовуємо (ML-прогноз, неточний для України).
+  PHgz → grey_forest, інші PH → podzolized_chernozems. Це основний шар.
+- Ґрунти, другий шар: SoilGrids 2.0 (ISRIC, 250 м, CC BY 4.0, атрибуція у футері).
+  Це ML-прогноз, а не знята карта: детальніший, але місцями суперечить HWSD
+  (чорноземи: ~70 % Вінниччини проти ~20 %). На сайті — окремі перемикачі з
+  позначкою «модельний прогноз» (рішення користувача 2026-11-15); HWSD ним не
+  замінюємо.
 
 ## Команди
 - Установка: `cd preprocessing && pip install -r requirements.txt`
@@ -46,6 +50,7 @@ Stage 2 буферує ЦЮ геометрію, тож відстань міря
   python 03_simplify_export.py        # ~1 хв
   python 04_export_rivers.py
   python 05_export_soils.py           # ~30 с, сам качає HWSD у data/raw/hwsd2/
+  python 06_export_soilgrids.py       # ~20 с, сам качає SoilGrids у data/raw/soilgrids/
   ```
 - Запуск веб: `cd web && python -m http.server 8000`
 - Тести: `pytest tests/`
@@ -75,6 +80,6 @@ data/processed/ ← stage1.gpkg, stage2.gpkg (gitignore)
 ```
 
 ## Перевірки перед коммітом
-- `pytest tests/` — зелений (89 тестів)
+- `pytest tests/` — зелений (97 тестів)
 - `black preprocessing/ tests/` — без diff
 - `ruff check preprocessing/ tests/` — без помилок
