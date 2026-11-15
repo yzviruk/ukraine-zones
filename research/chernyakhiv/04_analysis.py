@@ -144,18 +144,11 @@ def pseudo_sites(geo, sites, rng) -> gpd.GeoSeries:
     """Villages without catalogue sites, shifted by the same rule as stage 2."""
     oblast, _ = geo.load_admin()
     places = geo.load_places(oblast)
-    places = places[places.within(oblast)]
+    extents = geo.Extents(places.to_crs(geo.METRIC_CRS), geo.built_up(oblast))
     used = set(sites["place_idx"].astype(int))
-    pool = places[~places.index.isin(used) & places["place"].isin(["village", "hamlet", "town"])]
-    pool_m = pool.to_crs(geo.METRIC_CRS)
-    polygons = geo.built_up(oblast)
-    sindex = polygons.sindex
-    mix = sites["direction"].fillna("").to_numpy()
-    out = []
-    for anchor in pool_m.geometry:
-        direction = rng.choice(mix)
-        out.append(geo.shift(anchor, direction, False, polygons, sindex))
-    return gpd.GeoSeries(out, crs=geo.METRIC_CRS)
+    inside = places[places.within(oblast)]
+    control = geo.control_points(inside, extents, used, geo.site_mix(sites), rng)
+    return gpd.GeoSeries(list(control["point"]), crs=geo.METRIC_CRS)
 
 
 def uniform_points(geo, n, rng) -> gpd.GeoSeries:

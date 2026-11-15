@@ -90,10 +90,11 @@ def test_candidates_keep_clear_of_known_sites():
 
 def test_accuracy_classes():
     viewer = _viewer()
-    assert viewer.accuracy("named", "N") == "A"
-    assert viewer.accuracy("dem", "") == "B"
-    assert viewer.accuracy("none", "SW") == "C"
-    assert viewer.accuracy("none", "C") == "D"  # "in the centre": the village alone
+    assert viewer.accuracy("named", "beyond") == "A"
+    assert viewer.accuracy("dem", "village") == "B"
+    assert viewer.accuracy("none", "outskirts") == "C"
+    assert viewer.accuracy("none", "between") == "C"
+    assert viewer.accuracy("none", "village") == "D"
     assert viewer.accuracy("none", None) == "D"
     assert set(viewer.ACCURACY_M) == {"A", "B", "C", "D"}
 

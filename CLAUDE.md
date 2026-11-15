@@ -75,6 +75,6 @@ data/processed/ ← stage1.gpkg, stage2.gpkg (gitignore)
 ```
 
 ## Перевірки перед коммітом
-- `pytest tests/` — зелений (31 тест)
+- `pytest tests/` — зелений (89 тестів)
 - `black preprocessing/ tests/` — без diff
 - `ruff check preprocessing/ tests/` — без помилок

@@ -96,7 +96,11 @@ const MODE = /*MODE*/"plain";  // "encrypted": sites.enc.json, see 05b_viewer.py
 const COLORS = { named: "#1a9e5c", dem: "#2a78d6", none: "#8a8984" };
 const SNAP_LABEL = { named: "за назвою (OSM)", dem: "за типом (DEM)", none: "немає" };
 const ACC_LABEL = { A: "берег названої водойми, ≈ 300 м", B: "берег водотоку за типом, ≈ 500 м",
-                    C: "лише напрям від села, ≈ 1 км", D: "лише село, ≈ 1.5 км" };
+                    C: "за текстом від села, без води, ≈ 1 км", D: "лише село, ≈ 1.5 км" };
+const PLACED_LABEL = { inside: "у межах села", outskirts: "на околиці", beyond: "за селом",
+  distance: "за відстанню з тексту", two_villages: "за двома селами", between: "між двома селами",
+  village: "лише село" };
+const LANDFORM_LABEL = { floodplain: "заплава", terrace: "тераса", slope: "схил", plateau: "плато / мис" };
 const CAND_COLORS = { top: "#d1495b", high: "#f2a65a" };
 const BURIAL_COLOR = "#1d1d1b";
 const SPREAD_M = 70;  // sites placed on the very same spot are fanned out on the map
@@ -163,6 +167,7 @@ function popup(p) {
   const rows = [
     ["Село", p.village], ["Район", p.district], ["Напрям", p.direction],
     ["Водойма", p.water_name], ["Берег (текст)", p.bank], ["Клас водойми", p.water_class],
+    ["Положення (текст)", PLACED_LABEL[p.placed]], ["Рельєф (текст)", LANDFORM_LABEL[p.landform]],
     ["Берег (застосовано)", p.bank_used], ["Прив'язка", SNAP_LABEL[p.snap_how]],
     ["Водозбір русла", p.channel_km2 != null ? p.channel_km2.toFixed(1) + " км²" : null],
     ["Зсув", p.shift_m ? Math.round(p.shift_m) + " м" : null],

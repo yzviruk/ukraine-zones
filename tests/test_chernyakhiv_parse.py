@@ -86,3 +86,69 @@ def test_year_is_not_a_river(text, water, is_river):
     row = parser.parse_entry(12, text)
     assert row["water_name"] == water
     assert row["w_river"] == is_river
+
+
+@pytest.mark.parametrize(
+    ("desc", "expected"),
+    [
+        ("Поселення в південній частині села на плато", "inside"),
+        ("Поселення в центрі села на схилах плато", "inside"),
+        ("Поселення на території села, частково забудоване", "inside"),
+        ("Поселення на східній околиці села", "outskirts"),
+        ("Поселення на східному краю села на схилі плато", "outskirts"),
+        ("Поселення на схід від села на правому березі", "beyond"),
+        ("Поселення за східною околицею смт", "beyond"),
+        ("Поселення навпроти (через річку) північної околиці села", "beyond"),
+        ("Поселення поблизу села.", "near"),
+    ],
+)
+def test_position(desc, expected):
+    assert parser.position(desc, parser.direction(desc)) == expected
+
+
+def test_edge_of_the_village_gives_a_direction():
+    assert parser.direction("Поселення на східному краю села") == "E"
+
+
+@pytest.mark.parametrize(
+    ("desc", "km"),
+    [
+        ("Поселення у 4 км західніше села на мисі", 4.0),
+        ("Поселення в 0,5 км на схід від с. Пісочин на схилах", 0.5),
+        ("Поселення за 1,5 км західніше південно-західної околиці села", 1.5),
+        ("Поселення у 800 м на захід від села на терасі", 0.8),
+        ("Поселення у 1,5 км від с. Попова Гребля на мису", 1.5),
+        # distances to other landmarks are not positions relative to the village
+        ("Поселення на околиці села у 5 км від впадіння р. Рудка", ""),
+        ("Поселення в північній частині села в 100 м нижче греблі", ""),
+        ("Поселення на території смт, у 300 м східніше поселення «Бродецьке 1»", ""),
+        ("Поселення за околицею смт в 30 м від лівого берега р. Гнилоп’ять", ""),
+    ],
+)
+def test_distance_only_from_the_village(desc, km):
+    assert parser.parse_entry(1, "1. " + desc + ". Розміри 300 × 100 м.")["distance_km"] == km
+
+
+def test_second_village_and_between():
+    row = parser.parse_entry(
+        1, "1. Поселення на південний захід від с. Красносілка і на північний захід від с. Залісся."
+    )
+    assert (row["direction"], row["ref_village"]) == ("SW", "Красносілка")
+    assert (row["ref2_village"], row["ref2_direction"]) == ("Залісся", "NW")
+    row = parser.parse_entry(2, "2. Поселення між с. Вітрівка та с. Степове на схилі плато.")
+    assert (row["ref_village"], row["between_village"]) == ("Вітрівка", "Степове")
+    row = parser.parse_entry(
+        3, "3. Поселення на схід від села с. Свитинці і на захід від с. Ширмівка."
+    )
+    assert row["ref_village"] == "" and row["ref2_village"] == "Ширмівка"
+
+
+def test_figure_caption_inside_a_word_is_removed():
+    text = (
+        "276. Поселення на південній околиці села вздовж лівого береРис. 2.27. Поселення "
+        "Мар’янівка І (с. Мар’янівка): 1, 3 — миски (за: Милян 2014, рис. 4; 5) га р. Рів. "
+        "Розміри 400 × 100 м."
+    )
+    row = parser.parse_entry(276, text)
+    assert "Рис." not in row["desc"]
+    assert (row["bank"], row["water_name"]) == ("left", "Рів")

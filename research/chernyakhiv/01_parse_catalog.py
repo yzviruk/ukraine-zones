@@ -53,12 +53,52 @@ COMPASS = [
     ("NW", _N + r"\w*[ -]" + _W + _NOT_ASPECT),
     ("SE", _S + r"\w*[ -]" + _E + _NOT_ASPECT),
     ("SW", _S + r"\w*[ -]" + _W + _NOT_ASPECT),
-    ("N", r"на північ\b|північніше|північн\w* (?:околиц|частин|край)"),
-    ("S", r"на південь\b|південніше|південн\w* (?:околиц|частин|край)"),
-    ("E", r"на сх[іо]д\b|східніше|східн\w* (?:околиц|частин|край)"),
-    ("W", r"на зах[іо]д\b|західніше|західн\w* (?:околиц|частин|край)"),
+    ("N", r"на північ\b|північніше|північн\w* (?:околиц|частин|кра[йюї])"),
+    ("S", r"на південь\b|південніше|південн\w* (?:околиц|частин|кра[йюї])"),
+    ("E", r"на сх[іо]д\b|східніше|східн\w* (?:околиц|частин|кра[йюї])"),
+    ("W", r"на зах[іо]д\b|західніше|західн\w* (?:околиц|частин|кра[йюї])"),
     ("C", r"(?:в|у) центр|на території|в межах (?:села|міста|селища)"),
 ]
+# Where the site lies relative to the village (stage 2 turns it into a distance):
+#   inside     "у південній частині села", "в центрі", "на території", "на городах"
+#   outskirts  "на східній околиці", "на краю села"
+#   beyond     "на схід від села", "східніше", "за околицею", "навпроти (через річку)"
+#   near       "поблизу села" and no compass direction
+_SETTLEMENT = r"(?:села|селища|міста|смт)"
+POSITION = [
+    ("beyond", r"за \S+ околицею|від \S+ околиці|навпроти|через річку"),
+    ("outskirts", r"околиц|\bкра[юї] " + _SETTLEMENT),
+    (
+        "inside",
+        r"частин\w+ " + _SETTLEMENT + r"|(?:в|у) центр|на території|в межах|\bв селі\b"
+        r"|на городах (?:села|садиб)",
+    ),
+]
+_DIR_WORD = r"(?:північн|південн|сх[іо]д|зах[іо]д)[\w-]*(?: (?:сх[іо]д|зах[іо]д)\w*)?"
+_NAME = rf"[{UPPER}][\w’'-]+(?: [{UPPER}][\w’'-]+)?"
+# Distance FROM THE VILLAGE only: "у 4 км західніше села", "в 0,5 км на схід від
+# с. Пісочин", "за 1,5 км західніше південно-західної околиці села". Distances to
+# other landmarks ("в 100 м нижче греблі", "у 300 м східніше поселення «…»") are
+# not positions relative to the village and are ignored.
+VILLAGE_DISTANCE = re.compile(
+    r"\b(?:за|у|в)\s+(\d+(?:,\d+)?)\s*(км|м)\s+(?:на\s+)?"
+    + _DIR_WORD
+    + r"\s+(?:від\s+)?(?:[\w’'-]+\s+){0,2}?(?:села|селища|міста|смт|с\.|околиці)"
+    r"|\b(?:за|у|в)\s+(\d+(?:,\d+)?)\s*(км|м)\s+від\s+(?:села|селища|міста|смт|с\.)"
+)
+# A second village fixing the position: "... і на захід від с. Ширмівка".
+SECOND_REF = re.compile(
+    r" (?:і|та|й) (?:за [\d,]+ к?м )?((?:на )?" + _DIR_WORD + r") від (?:[\w-]+ околиці )?"
+    rf"(?:кол\. )?(?:с\.|смт|м\.) ({_NAME})"
+)
+# "між с. Вітрівка та с. Степове", "між кол. с. Паланка (...) і с. Вигнанка"
+BETWEEN = re.compile(
+    rf"між (?:[\w-]+ околицею )?(?:кол\. )?(?:с\.|смт|м\.) ({_NAME})[^.]*? (?:та|і|й) "
+    rf"(?:[\w-]+ околицею )?(?:кол\. )?(?:с\.|смт|м\.) ({_NAME})"
+)
+# A figure caption that the PDF text layer drops into the middle of a word:
+# "береРис. 2.27. Поселення … (за: Милян, Чорний 2014, рис. 4; 5) га р. Рів".
+CAPTION_IN_WORD = re.compile(r"(?<=[а-яіїєґ])Рис\. \d+\.\d+\. .*?\)\s?(?=[а-яіїєґ])")
 LANDFORMS = {
     "plateau": r"плато",
     "slope": r"схил",
@@ -161,7 +201,26 @@ def direction(desc: str) -> str:
     return min(hits)[2] if hits else ""
 
 
+def position(desc: str, compass: str) -> str:
+    low = desc.lower()
+    for kind, pat in POSITION:
+        if re.search(pat, low):
+            return kind
+    if compass == "C":
+        return "inside"
+    return "beyond" if compass else "near"
+
+
+def compass_of(phrase: str) -> str:
+    """Compass code of a bare direction phrase ("на південний захід", "західніше")."""
+    low = phrase.lower()
+    north, south = "північ" in low, "півден" in low
+    east, west = bool(re.search(_E, low)), bool(re.search(_W, low))
+    return ("N" if north else "S" if south else "") + ("E" if east else "W" if west else "")
+
+
 def parse_entry(no: int, text: str) -> dict:
+    text = CAPTION_IN_WORD.sub("", text)
     body = text.split(" Взято на облік")[0]
     desc = re.split(r" Знахідки| Рис\. \d", body)[0]
     low = desc.lower()
@@ -181,7 +240,12 @@ def parse_entry(no: int, text: str) -> dict:
         ),
         "aspect": first(r"(" + ASPECTS + r")\w* схил", low),
         "direction": direction(desc),
+        "position": "",
         "distance_km": "",
+        # A second village that pins the site down, see stage 2:
+        "ref2_village": "",  # "... і на захід від с. X" (with ref2_direction)
+        "ref2_direction": "",
+        "between_village": "",  # "між с. A та с. X"
         "length_m": size.group(1) if size else "",
         "width_m": size.group(2) if size else "",
         "layer_m": first(r"(?:культурний шар|товщина культурного шару) ([\d,—–-]+) м", body),
@@ -195,11 +259,20 @@ def parse_entry(no: int, text: str) -> dict:
         row["lf_" + key] = int(bool(re.search(pat, low)))
     for key, pat in WATERS.items():
         row["w_" + key] = int(bool(re.search(pat, desc if key == "river" else low)))
-    # Distance from the village/landmark: "у 5 км від", "за 300 м на схід".
-    m = re.search(r"\b(?:за|у|в|на відстані)\s+(\d+(?:,\d+)?)\s*(км|м)\b", desc)
+    row["position"] = position(desc, row["direction"])
+    m = VILLAGE_DISTANCE.search(desc)
     if m:
-        val = float(m.group(1).replace(",", "."))
-        row["distance_km"] = val if m.group(2) == "км" else round(val / 1000, 3)
+        value, unit = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+        val = float(value.replace(",", "."))
+        row["distance_km"] = val if unit == "км" else round(val / 1000, 3)
+    m = SECOND_REF.search(desc)
+    if m and compass_of(m.group(1)):
+        row["ref2_village"], row["ref2_direction"] = m.group(2), compass_of(m.group(1))
+    m = BETWEEN.search(desc)
+    if m:
+        row["ref_village"], row["between_village"] = m.group(1), m.group(2)
+    if row["ref_village"] and row["ref_village"] == row["ref2_village"]:
+        row["ref_village"] = ""  # the first village is the header one
     return row
 
 

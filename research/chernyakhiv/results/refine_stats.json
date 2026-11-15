@@ -13,9 +13,9 @@
   },
   "n_settlements": 491,
   "snap_counts": {
-    "dem": 281,
-    "none": 116,
-    "named": 94
+    "dem": 279,
+    "none": 115,
+    "named": 97
   },
   "snap_by_class": {
     "none": {
@@ -29,154 +29,154 @@
       "none": 0
     },
     "river": {
-      "dem": 79,
-      "named": 90,
+      "dem": 77,
+      "named": 94,
       "none": 0
     },
     "river->stream": {
-      "dem": 22,
-      "named": 4,
+      "dem": 21,
+      "named": 3,
       "none": 0
     },
     "stream": {
-      "dem": 164,
+      "dem": 165,
       "named": 0,
-      "none": 1
+      "none": 0
     }
   },
   "bank_used": {
-    "left": 150,
+    "left": 151,
     "right": 135,
     "none": 115,
     "left(side)": 49,
-    "right(side)": 42
+    "right(side)": 41
   },
   "shift_m": {
-    "median": 291,
-    "q25": 133,
-    "q75": 507,
-    "q90": 829
+    "median": 307,
+    "q25": 148,
+    "q75": 529,
+    "q90": 906
   },
   "pseudo_snap_counts": {
-    "dem": 951,
-    "none": 257
+    "dem": 950,
+    "none": 258
   },
   "medians": {
     "sites": {
-      "hand_dstream_before": 10.22,
-      "hand_dstream_after": 8.34,
-      "rel_valley_before": 16.27,
-      "rel_valley_after": 14.3,
-      "tpi300_before": 0.23,
-      "tpi300_after": -0.0,
-      "tpi1000_before": -2.55,
-      "tpi1000_after": -6.18,
-      "slope_before": 3.1,
-      "slope_after": 3.62,
-      "elevation_before": 249.62,
-      "elevation_after": 245.4,
-      "flow_acc_km2_before": -0.16,
+      "hand_dstream_before": 10.34,
+      "hand_dstream_after": 8.66,
+      "rel_valley_before": 15.97,
+      "rel_valley_after": 13.67,
+      "tpi300_before": 0.17,
+      "tpi300_after": -0.22,
+      "tpi1000_before": -2.32,
+      "tpi1000_after": -6.89,
+      "slope_before": 3.08,
+      "slope_after": 3.67,
+      "elevation_before": 249.06,
+      "elevation_after": 244.05,
+      "flow_acc_km2_before": -0.22,
       "flow_acc_km2_after": 1.17
     },
     "pseudo": {
-      "hand_dstream_before": 10.54,
-      "hand_dstream_after": 8.49,
-      "rel_valley_before": 17.07,
-      "rel_valley_after": 14.69,
-      "tpi300_before": 0.43,
-      "tpi300_after": -0.25,
-      "tpi1000_before": -0.76,
-      "tpi1000_after": -6.31,
-      "slope_before": 3.17,
+      "hand_dstream_before": 10.51,
+      "hand_dstream_after": 8.43,
+      "rel_valley_before": 16.8,
+      "rel_valley_after": 14.57,
+      "tpi300_before": 0.24,
+      "tpi300_after": -0.4,
+      "tpi1000_before": -1.16,
+      "tpi1000_after": -6.61,
+      "slope_before": 3.25,
       "slope_after": 3.78,
-      "elevation_before": 260.64,
-      "elevation_after": 252.69,
-      "flow_acc_km2_before": -0.28,
-      "flow_acc_km2_after": 0.75
+      "elevation_before": 259.69,
+      "elevation_after": 252.05,
+      "flow_acc_km2_before": -0.22,
+      "flow_acc_km2_after": 0.74
     }
   },
   "auc_sites_vs_pseudo_all": {
     "hand_dstream": {
-      "before": 0.466,
-      "after": 0.49
+      "before": 0.477,
+      "after": 0.492
     },
     "rel_valley": {
-      "before": 0.467,
-      "after": 0.476
+      "before": 0.473,
+      "after": 0.467
     },
     "tpi300": {
-      "before": 0.487,
-      "after": 0.519
+      "before": 0.503,
+      "after": 0.522
     },
     "tpi1000": {
-      "before": 0.466,
-      "after": 0.517
+      "before": 0.489,
+      "after": 0.512
     },
     "slope": {
-      "before": 0.489,
-      "after": 0.462
+      "before": 0.475,
+      "after": 0.46
     },
     "elevation": {
-      "before": 0.43,
-      "after": 0.442
+      "before": 0.435,
+      "after": 0.441
     },
     "flow_acc_km2": {
-      "before": 0.545,
-      "after": 0.579
+      "before": 0.507,
+      "after": 0.58
     }
   },
   "auc_sites_vs_pseudo_snapped": {
     "hand_dstream": {
-      "before": 0.447,
-      "after": 0.474
+      "before": 0.462,
+      "after": 0.479
     },
     "rel_valley": {
-      "before": 0.433,
-      "after": 0.439
+      "before": 0.446,
+      "after": 0.435
     },
     "tpi300": {
-      "before": 0.477,
-      "after": 0.516
+      "before": 0.495,
+      "after": 0.518
     },
     "tpi1000": {
-      "before": 0.457,
-      "after": 0.52
+      "before": 0.486,
+      "after": 0.517
     },
     "slope": {
-      "before": 0.468,
-      "after": 0.434
+      "before": 0.454,
+      "after": 0.435
     },
     "elevation": {
-      "before": 0.429,
-      "after": 0.444
+      "before": 0.439,
+      "after": 0.447
     },
     "flow_acc_km2": {
-      "before": 0.556,
-      "after": 0.621
+      "before": 0.512,
+      "after": 0.625
     }
   },
   "landform_check_high_vs_low": {
-    "n_high": 187,
+    "n_high": 188,
     "n_low": 46,
     "hand_dstream": {
-      "before": 0.63,
-      "after": 0.682
+      "before": 0.566,
+      "after": 0.654
     },
     "rel_valley": {
-      "before": 0.618,
-      "after": 0.656
+      "before": 0.591,
+      "after": 0.641
     },
     "tpi300": {
-      "before": 0.556,
-      "after": 0.597
+      "before": 0.492,
+      "after": 0.553
     },
     "tpi1000": {
-      "before": 0.561,
-      "after": 0.539
+      "before": 0.532,
+      "after": 0.504
     },
     "slope": {
-      "before": 0.581,
-      "after": 0.643
+      "before": 0.633,
+      "after": 0.646
     }
   }
 }

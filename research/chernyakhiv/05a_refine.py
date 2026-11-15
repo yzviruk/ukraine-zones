@@ -15,12 +15,20 @@ bank of the r. Murashka"). Here:
        (left/right facing downstream), or to the side of the stage-2 point.
 The offset is fixed on purpose: choosing it by relief would make the relief
 features confirm themselves.
+    4. "at the confluence of two streams", "on a cape between two ravines":
+       the channel cells near a junction of the DEM network are preferred.
+
+Two position sets come out of it:
+    sites_refined  fixed offset - for the analyses and the model (no relief fitting)
+    sites_best     best estimate for the map and fieldwork: the offset follows the
+                   landform in the text (floodplain / terrace / slope / plateau,
+                   cape) up the valley side on the DEM. NOT for relief statistics.
 
 Control: the stage-4 "edges of other villages", refined by the same procedure
 with water type and bank drawn from the catalogue's mix (no names).
 
 Outputs:
-    data/processed/chernyakhiv_sites.gpkg, layer "sites_refined"   (LOCAL ONLY)
+    data/processed/chernyakhiv_sites.gpkg, layers "sites_refined", "sites_best"  (LOCAL ONLY)
     research/chernyakhiv/results/refine_stats.json, refine_ecdf.png (aggregated)
 """
 
@@ -29,6 +37,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
+import re
 from pathlib import Path
 
 import geopandas as gpd
@@ -36,7 +45,7 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import rasterio
-from scipy import stats
+from scipy import ndimage, stats
 from shapely.geometry import Point
 from shapely.ops import unary_union
 
@@ -56,6 +65,12 @@ OFFSET_M = 150  # from the channel to the stated bank (fixed, see docstring)
 DIR_RADIUS_CELLS = 4  # neighbourhood for the flow direction along the channel
 CLASS_KM2 = {"river": 10.0, "stream": 1.0, "ravine": 0.3}
 SAMPLE_RADIUS_M = 250
+JUNCTION_KM2 = 0.3  # a tributary of at least this catchment makes a confluence
+JUNCTION_M = 300  # "at the confluence": channel cells this close to a junction
+CONFLUENCE = re.compile(
+    "злитт|впадін|впада|між устями|між дв(?:ох|ома) (?:струмк|балк|яр|сух)|мис[іу]? між"
+)
+WALK_M = 450  # best estimate: how far up the valley side to look
 SEED = 42
 
 # feature -> (label, unit, kind)
@@ -136,7 +151,70 @@ def flow_vector(acc: Raster, r: int, c: int) -> tuple[float, float] | None:
     return (dx / norm, dy / norm) if norm else None
 
 
-def snap(point, anchor, direction, wclass, bank, named_line, acc: Raster):
+def near_junction(acc: Raster, rows, cols) -> np.ndarray:
+    """Which of the cells lie within JUNCTION_M of a confluence of the DEM network:
+    a channel cell fed by two or more upstream channel cells."""
+    pad = int(JUNCTION_M / acc.cell) + 2
+    r0, c0 = max(rows.min() - pad, 1), max(cols.min() - pad, 1)
+    r1 = min(rows.max() + pad, acc.a.shape[0] - 2)
+    c1 = min(cols.max() + pad, acc.a.shape[1] - 2)
+    sub = np.nan_to_num(acc.a[r0 : r1 + 1, c0 : c1 + 1], nan=0.0)
+    feeders = np.zeros(sub.shape, dtype=int)
+    for dr in (-1, 0, 1):
+        for dc in (-1, 0, 1):
+            if dr or dc:
+                nb = acc.a[r0 + dr : r1 + 1 + dr, c0 + dc : c1 + 1 + dc]
+                nb = np.nan_to_num(nb, nan=0.0)
+                feeders += (nb >= JUNCTION_KM2) & (nb < sub)
+    junction = (sub >= JUNCTION_KM2) & (feeders >= 2)
+    if not junction.any():
+        return np.zeros(len(rows), dtype=bool)
+    dist = ndimage.distance_transform_edt(~junction) * acc.cell
+    rr = np.clip(rows - r0, 0, sub.shape[0] - 1)
+    cc = np.clip(cols - c0, 0, sub.shape[1] - 1)
+    return dist[rr, cc] <= JUNCTION_M
+
+
+def best_point(elev: Raster, cx, cy, side, landform: str) -> Point:
+    """Best-estimate position: from the channel cell up the stated valley side
+    to where the DEM matches the landform named in the text."""
+    steps = np.arange(1, int(WALK_M / elev.cell) + 1) * elev.cell
+    r0, c0 = elev.rc(cx, cy)
+    base = elev.a[r0, c0]
+    heights = []
+    for d in steps:
+        r, c = elev.rc(cx + side[0] * d, cy + side[1] * d)
+        inside = 0 <= r < elev.a.shape[0] and 0 <= c < elev.a.shape[1]
+        heights.append(elev.a[r, c] - base if inside else np.nan)
+    h = np.maximum.accumulate(np.nan_to_num(np.array(heights, dtype=float), nan=0.0))
+    top = h.max()
+
+    def first(level, lo, hi, default):
+        ok = np.nonzero((h >= level) & (steps >= lo) & (steps <= hi))[0]
+        return float(steps[ok[0]]) if len(ok) else default
+
+    if landform == "floodplain":
+        d = 60.0
+    elif landform == "terrace":
+        d = first(3.0, 60, 240, 120.0)
+    elif landform == "slope":
+        d = first(0.5 * top, 90, 360, float(OFFSET_M)) if top >= 4 else float(OFFSET_M)
+    elif landform == "plateau":
+        d = first(0.8 * top, 120, WALK_M, 240.0) if top >= 4 else 240.0
+    else:
+        d = float(OFFSET_M)
+    return Point(cx + side[0] * d, cy + side[1] * d)
+
+
+def landform_of(row) -> str:
+    """One landform per site for best_point(); "схил плато" is a slope."""
+    for key in ("floodplain", "terrace", "slope"):
+        if row.get("lf_" + key):
+            return key
+    return "plateau" if row.get("lf_plateau") or row.get("lf_cape") else ""
+
+
+def snap(point, anchor, direction, wclass, bank, named_line, acc: Raster, confluence=False):
     """Return (new point, info dict); new point is None when nothing fits."""
     info = {"water_class": wclass, "bank_used": bank, "snap_how": "none"}
     if wclass is None:
@@ -160,6 +238,11 @@ def snap(point, anchor, direction, wclass, bank, named_line, acc: Raster):
     rows, cols, xs, ys, d = rows[found], cols[found], xs[found], ys[found], d[found]
     info["water_class"] = tier if tier == wclass else f"{wclass}->{tier}"
     info["snap_how"] = "dem"
+    if confluence:
+        junction = near_junction(acc, rows, cols)
+        if junction.any():
+            rows, cols, xs, ys, d = (v[junction] for v in (rows, cols, xs, ys, d))
+            info["confluence"] = True
     if named_line is not None:
         near = np.array(
             [named_line.distance(Point(x, y)) <= NAMED_TOL_M for x, y in zip(xs, ys, strict=True)]
@@ -184,6 +267,8 @@ def snap(point, anchor, direction, wclass, bank, named_line, acc: Raster):
     norm = math.hypot(*side) or 1.0
     new = Point(cx + side[0] / norm * OFFSET_M, cy + side[1] / norm * OFFSET_M)
     info["shift_m"] = float(new.distance(point))
+    info["channel_x"], info["channel_y"] = float(cx), float(cy)
+    info["side_x"], info["side_y"] = side[0] / norm, side[1] / norm
     return new, info
 
 
@@ -196,23 +281,10 @@ def pseudo_with_anchors(sites, rng) -> pd.DataFrame:
     """Stage-4 control (same rng sequence), keeping anchor and direction."""
     oblast, _ = GEO.load_admin()
     places = GEO.load_places(oblast)
-    places = places[places.within(oblast)]
+    extents = GEO.Extents(places.to_crs(GEO.METRIC_CRS), GEO.built_up(oblast))
     used = set(sites["place_idx"].astype(int))
-    pool = places[~places.index.isin(used) & places["place"].isin(["village", "hamlet", "town"])]
-    polygons = GEO.built_up(oblast)
-    sindex = polygons.sindex
-    mix = sites["direction"].fillna("").to_numpy()
-    out = []
-    for anchor in pool.to_crs(GEO.METRIC_CRS).geometry:
-        direction = rng.choice(mix)
-        out.append(
-            {
-                "anchor": anchor,
-                "direction": direction,
-                "point": GEO.shift(anchor, direction, False, polygons, sindex),
-            }
-        )
-    return pd.DataFrame(out)
+    inside = places[places.within(oblast)]
+    return GEO.control_points(inside, extents, used, GEO.site_mix(sites), rng)
 
 
 def sample(points, rasters: dict[str, Raster]) -> pd.DataFrame:
@@ -298,13 +370,33 @@ def main() -> None:
             line = None  # same name, other river
         direction = row["direction"] if isinstance(row["direction"], str) else ""
         bank = row["bank"] if isinstance(row["bank"], str) else None
-        p, info = snap(row.geometry, anchor, direction, water_class(row), bank, line, acc)
+        confluence = bool(CONFLUENCE.search(str(row["desc"]).lower()))
+        p, info = snap(
+            row.geometry, anchor, direction, water_class(row), bank, line, acc, confluence
+        )
         new_pts.append(p if p is not None else row.geometry)
         infos.append(info)
     info = pd.DataFrame(infos)
     refined = sites.assign(**info, geometry=new_pts)
     refined["shift_m"] = refined["shift_m"].fillna(0.0)
     refined.to_file(SITES, layer="sites_refined", driver="GPKG")
+
+    # Best estimate for the map: the offset follows the landform of the text.
+    elev = Raster("elevation")
+    best_pts, forms = [], []
+    for (_, row), p in zip(refined.iterrows(), new_pts, strict=True):
+        form = landform_of(row) if row["snap_how"] != "none" else ""
+        forms.append(form)
+        if form:
+            side = (row["side_x"], row["side_y"])
+            p = best_point(elev, row["channel_x"], row["channel_y"], side, form)
+        best_pts.append(p)
+    del elev
+    best = refined.assign(landform=forms, geometry=best_pts)
+    best["best_m"] = [a.distance(b) for a, b in zip(best_pts, new_pts, strict=True)]
+    best.to_file(SITES, layer="sites_best", driver="GPKG")
+    counts = pd.Series(forms).replace("", "as refined").value_counts().to_dict()
+    print(f"best estimate by landform: {counts}")
 
     print("refining the control ...")
     pseudo = pseudo_with_anchors(sites, rng)

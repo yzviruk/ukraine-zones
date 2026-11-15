@@ -77,7 +77,6 @@ SUITABILITY_CLASSES = [
     (97, (118, 42, 131, 230)),
 ]
 KEEP = ["no", "village", "district", "bank", "water_name", "direction", "desc", "text"]
-COMPASS = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
 # Candidate zones: suitability percentile >= CANDIDATE_RANK (TOP_RANK = the best
 # 3 %) and no known site within CANDIDATE_GAP_M. Patches under two cells dropped.
 CANDIDATE_RANK, TOP_RANK = 90, 97
@@ -155,14 +154,15 @@ def hillshade_image(out: Path) -> list:
     return bounds
 
 
-def accuracy(snap_how, direction) -> str:
+def accuracy(snap_how, placed) -> str:
     """A: snapped to the named water; B: to a channel of the stated type;
-    C: only a compass direction from the village; D: the village alone."""
+    C: placed from the village by the text alone (direction, part of the village,
+    distance, second village); D: the village alone."""
     if snap_how == "named":
         return "A"
     if snap_how == "dem":
         return "B"
-    return "C" if direction in COMPASS else "D"
+    return "D" if placed in ("village", None, "") else "C"
 
 
 def candidate_mask(rank, transform, site_xy, gap_m=CANDIDATE_GAP_M, min_rank=CANDIDATE_RANK):
@@ -201,14 +201,18 @@ def sites_geojson() -> bytes:
     stage2 = gpd.read_file(SITES, layer="sites")
     before = stage2[stage2["type"] == "Поселення"].reset_index(drop=True)
     burials = stage2[stage2["type"] == "Могильник"].reset_index(drop=True)
-    after = gpd.read_file(SITES, layer="sites_refined")
+    # The map shows the best estimate (05a: offset by the landform of the text);
+    # the fixed-offset "sites_refined" layer is for the analyses only.
+    after = gpd.read_file(SITES, layer="sites_best")
     assert (before["no"].to_numpy() == after["no"].to_numpy()).all()
-    props = after[KEEP + ["water_class", "bank_used", "snap_how", "channel_km2", "shift_m"]]
+    after["shift_m"] = after.distance(before)
+    extra = ["water_class", "bank_used", "snap_how", "channel_km2", "shift_m", "placed", "landform"]
+    props = after[KEEP + extra]
     props = props.astype(object).where(props.notna(), None)
     feats = []
     for i, rec in enumerate(props.to_dict(orient="records")):
         b, a = before.geometry[i], after.geometry[i]
-        acc = accuracy(rec["snap_how"], rec["direction"])
+        acc = accuracy(rec["snap_how"], rec["placed"])
         # Text only on the main point; the other two link to it by "no".
         short = {k: rec[k] for k in ("no", "village", "snap_how", "shift_m")}
         feats += [
@@ -218,9 +222,10 @@ def sites_geojson() -> bytes:
         if rec["snap_how"] != "none":
             feats.append({**short, "role": "shift", "geometry": LineString([b, a])})
     # Cemeteries are not refined (stage 5.1 covers settlements): stage-2 positions.
-    burial_props = burials[KEEP].astype(object).where(burials[KEEP].notna(), None)
+    burial_props = burials[KEEP + ["placed"]]
+    burial_props = burial_props.astype(object).where(burial_props.notna(), None)
     for i, rec in enumerate(burial_props.to_dict(orient="records")):
-        acc = accuracy("none", rec["direction"])
+        acc = accuracy("none", rec["placed"])
         feats.append(
             {
                 **rec,
