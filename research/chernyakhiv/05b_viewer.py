@@ -12,6 +12,9 @@ gzip -> AES-256-GCM with a key from PBKDF2-SHA256 (600k iterations, random salt)
 The page asks for the password and decrypts in the browser (WebCrypto). Only the
 ciphertext is committed; the background layers (hillshade, DEM channels, OSM
 waterways, 150 m suitability) say nothing about the sites and stay plain.
+The candidate zones (high suitability with no known site nearby) are cut out
+around the known sites, so their holes give the sites away: they go into the
+encrypted payload too, never into a plain file.
 
 Password: env CHERNYAKHIV_PASSWORD, otherwise asked twice in the terminal.
 Use a long passphrase (>= 14 characters; the ciphertext is public, so a weak
@@ -43,8 +46,12 @@ import numpy as np
 import pandas as pd
 import rasterio
 from PIL import Image
+from rasterio.features import shapes
 from rasterio.warp import Resampling, calculate_default_transform, reproject
-from shapely.geometry import LineString
+from scipy.spatial import cKDTree
+from shapely import set_precision
+from shapely.geometry import LineString, shape
+from shapely.ops import unary_union
 
 HERE = Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parents[1]
@@ -70,6 +77,15 @@ SUITABILITY_CLASSES = [
     (97, (118, 42, 131, 230)),
 ]
 KEEP = ["no", "village", "district", "bank", "water_name", "direction", "desc", "text"]
+COMPASS = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
+# Candidate zones: suitability percentile >= CANDIDATE_RANK (TOP_RANK = the best
+# 3 %) and no known site within CANDIDATE_GAP_M. Patches under two cells dropped.
+CANDIDATE_RANK, TOP_RANK = 90, 97
+CANDIDATE_GAP_M = 1000
+MIN_PATCH_M2 = 2 * SUITABILITY_RES_M**2
+# Position accuracy: class -> radius (m). Estimates from how the point was placed
+# (refine.md: median snap shift 290 m, 90 % < 830 m), NOT validated on the ground.
+ACCURACY_M = {"A": 300, "B": 500, "C": 1000, "D": 1500}
 KDF_ITERATIONS = 600_000
 MIN_PASSWORD = 14
 
@@ -139,9 +155,52 @@ def hillshade_image(out: Path) -> list:
     return bounds
 
 
+def accuracy(snap_how, direction) -> str:
+    """A: snapped to the named water; B: to a channel of the stated type;
+    C: only a compass direction from the village; D: the village alone."""
+    if snap_how == "named":
+        return "A"
+    if snap_how == "dem":
+        return "B"
+    return "C" if direction in COMPASS else "D"
+
+
+def candidate_mask(rank, transform, site_xy, gap_m=CANDIDATE_GAP_M, min_rank=CANDIDATE_RANK):
+    """Cells with suitability >= min_rank and no known site within gap_m."""
+    rows, cols = np.nonzero(rank >= min_rank)
+    x = transform.c + (cols + 0.5) * transform.a
+    y = transform.f + (rows + 0.5) * transform.e
+    dist, _ = cKDTree(site_xy).query(np.c_[x, y])
+    mask = np.zeros(rank.shape, dtype=bool)
+    mask[rows[dist > gap_m], cols[dist > gap_m]] = True
+    return mask
+
+
+def candidate_features(site_xy) -> list[dict]:
+    """Candidate zones as two dissolved polygons: the top 3 % and the rest."""
+    if not SUITABILITY.exists():
+        print("  (no suitability raster: run 05d_map.py)")
+        return []
+    with rasterio.open(SUITABILITY) as src:
+        rank, transform = src.read(1), src.transform
+    mask = candidate_mask(rank, transform, site_xy)
+    feats = []
+    for cls, part in (("top", mask & (rank >= TOP_RANK)), ("high", mask & (rank < TOP_RANK))):
+        polys = [
+            shape(geom) for geom, _ in shapes(part.astype("uint8"), mask=part, transform=transform)
+        ]
+        polys = [p for p in polys if p.area >= MIN_PATCH_M2]
+        if polys:
+            area = sum(p.area for p in polys) / 1e6
+            print(f"  candidates {cls}: {len(polys)} patches, {area:.0f} km2")
+            feats.append({"role": "candidate", "cls": cls, "geometry": unary_union(polys)})
+    return feats
+
+
 def sites_geojson() -> bytes:
-    before = gpd.read_file(SITES, layer="sites")
-    before = before[before["type"] == "Поселення"].reset_index(drop=True)
+    stage2 = gpd.read_file(SITES, layer="sites")
+    before = stage2[stage2["type"] == "Поселення"].reset_index(drop=True)
+    burials = stage2[stage2["type"] == "Могильник"].reset_index(drop=True)
     after = gpd.read_file(SITES, layer="sites_refined")
     assert (before["no"].to_numpy() == after["no"].to_numpy()).all()
     props = after[KEEP + ["water_class", "bank_used", "snap_how", "channel_km2", "shift_m"]]
@@ -149,15 +208,33 @@ def sites_geojson() -> bytes:
     feats = []
     for i, rec in enumerate(props.to_dict(orient="records")):
         b, a = before.geometry[i], after.geometry[i]
+        acc = accuracy(rec["snap_how"], rec["direction"])
         # Text only on the main point; the other two link to it by "no".
         short = {k: rec[k] for k in ("no", "village", "snap_how", "shift_m")}
         feats += [
             {**short, "role": "before", "geometry": b},
-            {**rec, "role": "after", "geometry": a},
+            {**rec, "role": "after", "acc": acc, "acc_m": ACCURACY_M[acc], "geometry": a},
         ]
         if rec["snap_how"] != "none":
             feats.append({**short, "role": "shift", "geometry": LineString([b, a])})
+    # Cemeteries are not refined (stage 5.1 covers settlements): stage-2 positions.
+    burial_props = burials[KEEP].astype(object).where(burials[KEEP].notna(), None)
+    for i, rec in enumerate(burial_props.to_dict(orient="records")):
+        acc = accuracy("none", rec["direction"])
+        feats.append(
+            {
+                **rec,
+                "role": "burial",
+                "snap_how": "none",
+                "acc": acc,
+                "acc_m": ACCURACY_M[acc],
+                "geometry": burials.geometry[i],
+            }
+        )
+    known = pd.concat([after.geometry, burials.geometry])
+    feats += candidate_features(np.c_[known.x, known.y])
     gdf = gpd.GeoDataFrame(feats, geometry="geometry", crs=before.crs).to_crs(4326)
+    gdf["geometry"] = set_precision(gdf.geometry.values, 1e-5)  # ~1 m; keeps the payload small
     return gdf.to_json(drop_id=True, to_wgs84=True, ensure_ascii=False).encode("utf-8")
 
 

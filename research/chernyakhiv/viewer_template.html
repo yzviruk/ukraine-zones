@@ -64,19 +64,30 @@
   <label><input type="checkbox" data-snap="named" checked><span class="sw" style="background:var(--named)"></span>за назвою водойми (OSM)</label>
   <label><input type="checkbox" data-snap="dem" checked><span class="sw" style="background:var(--dem)"></span>за типом водойми (DEM)</label>
   <label><input type="checkbox" data-snap="none" checked><span class="sw" style="background:var(--none)"></span>без прив'язки</label>
-  <label><input type="checkbox" id="showBefore" checked><span class="sw ring"></span>положення етапу 2 + лінія зсуву</label>
+  <label><input type="checkbox" id="showBurials" checked><span class="sw" style="background:#1d1d1b;border-radius:2px"></span>могильники (положення етапу 2)</label>
+  <label><input type="checkbox" id="showBefore"><span class="sw ring"></span>положення етапу 2 + лінія зсуву</label>
   <label>мін. зсув, м <input type="number" id="minShift" value="0" min="0" step="50"></label>
   <label>№ <input type="number" id="findNo" min="1" max="513"> <button id="go">знайти</button></label>
   <p><strong>Водотоки з DEM</strong> (водозбір):</p>
   <label><span class="bar" style="background:rgb(110,170,230)"></span>1–10 км²</label>
   <label><span class="bar" style="background:rgb(40,110,210)"></span>10–100 км²</label>
   <label><span class="bar" style="background:rgb(10,50,150)"></span>≥ 100 км²</label>
-  <p><strong>Придатність</strong> (модель «водозбір», 150 м; шар праворуч угорі):</p>
+  <p><strong>Де шукати нові поселення</strong></p>
+  <label><input type="checkbox" id="showCand" checked><span class="sw" style="background:#d1495b;border-radius:2px"></span>кандидати: найвищі 3 %</label>
+  <label style="padding-left:19px"><span class="sw" style="background:#f2a65a;border-radius:2px"></span>кандидати: 90–97 %</label>
+  <p>Кандидат — придатне місце, де ближче 1 км немає відомих пам'яток. Це може
+    означати й те, що там просто ніхто не шукав.</p>
+  <label><input type="checkbox" id="showSuit" checked><strong>Придатність</strong> (модель, 150 м)</label>
   <label><span class="sw" style="background:rgb(118,42,131);border-radius:2px"></span>найвищі 3 % доступних місць</label>
   <label><span class="sw" style="background:rgb(153,112,171);border-radius:2px"></span>90–97 %</label>
   <label><span class="sw" style="background:rgb(194,165,207);border-radius:2px"></span>75–90 %</label>
   <label><span class="sw" style="background:rgb(231,212,232);border-radius:2px"></span>50–75 %</label>
-  <p>Шари (відмивка, водотоки, придатність, підкладка) — праворуч угорі.</p>
+  <label>прозорість <input type="range" id="suitOpacity" min="0" max="100" value="60"></label>
+  <p>Придатність — це перцентиль серед доступних місць, а не ймовірність: модель
+    враховує лише розмір найближчого водотоку (якість помірна, AUC ≈ 0.6).</p>
+  <p><strong>Точність положення</strong> (оцінка, у попапі; клік по точці малює коло):
+    A ≈ 300 м, B ≈ 500 м, C ≈ 1 км, D — лише село (≈ 1.5 км).</p>
+  <p>Інші шари (відмивка, водотоки, підкладка) — праворуч угорі.</p>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
@@ -84,6 +95,11 @@ const OVERLAYS = /*OVERLAYS*/null;
 const MODE = /*MODE*/"plain";  // "encrypted": sites.enc.json, see 05b_viewer.py
 const COLORS = { named: "#1a9e5c", dem: "#2a78d6", none: "#8a8984" };
 const SNAP_LABEL = { named: "за назвою (OSM)", dem: "за типом (DEM)", none: "немає" };
+const ACC_LABEL = { A: "берег названої водойми, ≈ 300 м", B: "берег водотоку за типом, ≈ 500 м",
+                    C: "лише напрям від села, ≈ 1 км", D: "лише село, ≈ 1.5 км" };
+const CAND_COLORS = { top: "#d1495b", high: "#f2a65a" };
+const BURIAL_COLOR = "#1d1d1b";
+const SPREAD_M = 70;  // sites placed on the very same spot are fanned out on the map
 
 const map = L.map("map", { preferCanvas: true });
 const [hz, hlat, hlon] = location.hash.slice(1).split("/").map(Number);
@@ -114,19 +130,33 @@ fetch("waterways.geojson").then(r => r.json()).then(g => {
    .addTo(waterways);
 });
 
+map.createPane("zones"); map.getPane("zones").style.zIndex = 360;
+const candLayer = L.layerGroup().addTo(map);
 const siteLayer = L.layerGroup().addTo(map);
+const accuracyRing = L.layerGroup().addTo(map);
 const overlayLayers = {
   "Відмивка рельєфу (DEM)": hillshade,
   "Водотоки з DEM (≥ 1 км²)": channels,
   "Водотоки OSM": waterways,
 };
-if (OVERLAYS.suitability) {
-  overlayLayers["Придатність (модель, 150 м)"] =
-    L.imageOverlay("suitability.png", OVERLAYS.suitability, { opacity: 0.75, pane: "raster" });
-}
+// Suitability and candidates are switched from the panel, where their legend is.
+const suitability = OVERLAYS.suitability
+  ? L.imageOverlay("suitability.png", OVERLAYS.suitability, { opacity: 0.6, pane: "raster" }).addTo(map)
+  : null;
+const toggle = (id, layer) => {
+  const box = document.getElementById(id);
+  const apply = () => layer && (box.checked ? layer.addTo(map) : map.removeLayer(layer));
+  box.addEventListener("change", apply);
+  if (!layer) { box.checked = false; box.disabled = true; }
+};
+toggle("showSuit", suitability);
+toggle("showCand", candLayer);
+document.getElementById("suitOpacity").addEventListener("input", (e) =>
+  suitability && suitability.setOpacity(e.target.value / 100));
 overlayLayers["Пам'ятки"] = siteLayer;
 L.control.layers(bases, overlayLayers, { collapsed: true }).addTo(map);
 L.control.scale({ imperial: false }).addTo(map);
+map.on("popupclose", () => accuracyRing.clearLayers());
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 function popup(p) {
@@ -136,8 +166,10 @@ function popup(p) {
     ["Берег (застосовано)", p.bank_used], ["Прив'язка", SNAP_LABEL[p.snap_how]],
     ["Водозбір русла", p.channel_km2 != null ? p.channel_km2.toFixed(1) + " км²" : null],
     ["Зсув", p.shift_m ? Math.round(p.shift_m) + " м" : null],
+    ["Точність", p.acc ? `${p.acc} — ${ACC_LABEL[p.acc]}` : null],
+    ["Та сама точка", p.stack ? "№ " + p.stack.join(", ") + " (на мапі розведено)" : null],
   ].filter(([, v]) => v != null && v !== "");
-  return `<strong>№ ${p.no}</strong><dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` +
+  return `<strong>${p.role === "burial" ? "Могильник " : ""}№ ${p.no}</strong><dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` +
          (p.text  // the full entry starts with the short description
            ? `<details open><summary>Текст каталогу</summary><div class="fulltext">${esc(p.text)}</div></details>`
            : `<div class="desc">${esc(p.desc)}</div>`);
@@ -150,16 +182,21 @@ function render() {
   const on = new Set([...document.querySelectorAll("[data-snap]")].filter(c => c.checked).map(c => c.dataset.snap));
   const showBefore = document.getElementById("showBefore").checked;
   const minShift = +document.getElementById("minShift").value || 0;
+  const showBurials = document.getElementById("showBurials").checked;
   let n = 0;
   for (const f of features) {
     const p = f.properties;
     if (!on.has(p.snap_how) || (p.shift_m || 0) < minShift) continue;
     const [lon, lat] = f.geometry.type === "Point" ? f.geometry.coordinates : [0, 0];
-    if (p.role === "after") {
-      n++;
-      const m = L.circleMarker([lat, lon], { radius: 6, color: "#fff", weight: 1.5,
-        fillColor: COLORS[p.snap_how], fillOpacity: 0.95 }).bindPopup(popup(p));
-      m.bindTooltip(`№ ${p.no} ${p.village}`);
+    if (p.role === "after" || (p.role === "burial" && showBurials)) {
+      const burial = p.role === "burial";
+      if (!burial) n++;
+      const m = L.circleMarker(p.shown || [lat, lon], { radius: burial ? 5 : 6, color: "#fff", weight: 1.5,
+        fillColor: burial ? BURIAL_COLOR : COLORS[p.snap_how], fillOpacity: 0.95 }).bindPopup(popup(p));
+      m.bindTooltip(`${burial ? "Могильник " : ""}№ ${p.no} ${p.village}`);
+      // The circle is drawn around the estimated position, not the fanned-out marker.
+      m.on("popupopen", () => accuracyRing.clearLayers().addLayer(L.circle([lat, lon],
+        { radius: p.acc_m, color: "#1d1d1b", weight: 1, dashArray: "5 4", fillOpacity: 0.04, interactive: false })));
       siteLayer.addLayer(m);
       byNo[p.no] = m;
     } else if (showBefore && p.role === "before" && p.snap_how !== "none") {
@@ -173,8 +210,36 @@ function render() {
   document.getElementById("stats").textContent = `Показано пам'яток: ${n} з 491`;
 }
 
+// Several sites of one village often get the very same estimated position:
+// fan their markers out in a small circle so each can be clicked.
+function spread(points) {
+  const groups = {};
+  for (const f of points) {
+    const key = f.geometry.coordinates.join(",");
+    (groups[key] = groups[key] || []).push(f);
+  }
+  for (const group of Object.values(groups)) {
+    if (group.length < 2) continue;
+    const [lon, lat] = group[0].geometry.coordinates;
+    const dLat = SPREAD_M / 111320, dLon = dLat / Math.cos(lat * Math.PI / 180);
+    group.forEach((f, i) => {
+      const a = 2 * Math.PI * i / group.length;
+      f.properties.shown = [lat + dLat * Math.cos(a), lon + dLon * Math.sin(a)];
+      f.properties.stack = group.filter(g => g !== f).map(g => g.properties.no);
+    });
+  }
+}
+
 function show(geojson) {
-  features = geojson.features;
+  const zones = geojson.features.filter(f => f.properties.role === "candidate");
+  features = geojson.features.filter(f => f.properties.role !== "candidate");
+  spread(features.filter(f => f.properties.role === "after" || f.properties.role === "burial"));
+  candLayer.clearLayers();
+  if (zones.length) {
+    candLayer.addLayer(L.geoJSON(zones, { pane: "zones", interactive: false, style: f => ({
+      color: CAND_COLORS[f.properties.cls], weight: 1, fillColor: CAND_COLORS[f.properties.cls],
+      fillOpacity: 0.55 }) }));
+  }
   render();
 }
 
@@ -211,7 +276,8 @@ if (MODE === "encrypted") {
 } else {
   fetch("sites.geojson").then(r => r.json()).then(show);
 }
-document.querySelectorAll(".panel input").forEach(el => el.addEventListener("change", render));
+document.querySelectorAll(".panel input:not(#showSuit):not(#showCand):not(#suitOpacity)")
+  .forEach(el => el.addEventListener("change", render));
 document.getElementById("go").addEventListener("click", () => {
   const m = byNo[+document.getElementById("findNo").value];
   if (m) { map.setView(m.getLatLng(), 14); m.openPopup(); }
