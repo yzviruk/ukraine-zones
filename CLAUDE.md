@@ -39,6 +39,12 @@ Stage 2 буферує ЦЮ геометрію, тож відстань міря
   (чорноземи: ~70 % Вінниччини проти ~20 %). На сайті — окремі перемикачі з
   позначкою «модельний прогноз» (рішення користувача 2026-11-15); HWSD ним не
   замінюємо.
+- Ґрунти, третій шар: темнота голої ріллі з Sentinel-2 (L2A Collection 1, 2018–2026,
+  композит голого ґрунту; `research/chernyakhiv/03d_bare_soil.py`, звіт
+  `research/chernyakhiv/bare_soil.md`). Це вимірювання, а не карта класів: відносний
+  індекс, лише рілля, лише Вінницька обл. На сайті — картинка ~100 м
+  (`docs/data/bare_soil_darkness.png` + `.json`), а не GeoJSON. Атрибуція у футері
+  обов'язкова: «Contains modified Copernicus Sentinel data», «© ESA WorldCover 2021».
 
 ## Команди
 - Установка: `cd preprocessing && pip install -r requirements.txt`
@@ -51,6 +57,8 @@ Stage 2 буферує ЦЮ геометрію, тож відстань міря
   python 04_export_rivers.py
   python 05_export_soils.py           # ~30 с, сам качає HWSD у data/raw/hwsd2/
   python 06_export_soilgrids.py       # ~20 с, сам качає SoilGrids у data/raw/soilgrids/
+  python 07_export_bare_soil.py       # ~1 хв; потребує композитів з 03d_bare_soil.py
+                                      # (збір сцен — години й ~55 ГБ, окремо від пайплайна)
   ```
 - Запуск веб: `cd web && python -m http.server 8000`
 - Тести: `pytest tests/`
@@ -80,6 +88,6 @@ data/processed/ ← stage1.gpkg, stage2.gpkg (gitignore)
 ```
 
 ## Перевірки перед коммітом
-- `pytest tests/` — зелений (97 тестів)
+- `pytest tests/` — зелений (113 тестів)
 - `black preprocessing/ tests/` — без diff
 - `ruff check preprocessing/ tests/` — без помилок

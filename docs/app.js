@@ -148,6 +148,27 @@ for (const { id, color } of SOIL_LAYERS) {
   );
 }
 
+// Soil darkness of ploughed land, measured from Sentinel-2 bare-soil composites
+// (research/chernyakhiv/03d_bare_soil.py -> preprocessing/07_export_bare_soil.py).
+// A picture, not polygons: a relative index on ~100 m cells, arable land only.
+const bareSoilRef = { layer: null, loading: null };
+const toggleBareSoil = document.getElementById("toggle-bare-soil");
+const bareSoilLegend = document.getElementById("bare-soil-legend");
+toggleBareSoil.addEventListener("change", async () => {
+  bareSoilLegend.classList.toggle("hidden", !toggleBareSoil.checked);
+  if (!bareSoilRef.layer) {
+    bareSoilRef.loading ??= fetch("data/bare_soil_darkness.json").then((r) => r.json());
+    const meta = await bareSoilRef.loading;
+    bareSoilRef.layer ??= L.imageOverlay("data/bare_soil_darkness.png", meta.bounds, {
+      opacity: 0.85,
+      interactive: false,
+      className: "bare-soil-image",
+    });
+  }
+  if (toggleBareSoil.checked) bareSoilRef.layer.addTo(map);
+  else map.removeLayer(bareSoilRef.layer);
+});
+
 // Chernyakhiv-culture sites (research/chernyakhiv). One point per village:
 // exact site locations are deliberately not published (anti-looting).
 // Own pane above all polygons, so soil layers never cover the markers.

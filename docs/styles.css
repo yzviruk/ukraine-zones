@@ -140,3 +140,8 @@ html, body {
   border-radius: 2px;
   vertical-align: -1px;
 }
+
+/* Soil darkness of ploughed land (raster layer): colour ramp in the legend */
+.legend .ramp { display: flex; height: 12px; border: 1px solid #999; margin: 4px 0 0; }
+.legend .ramp span { flex: 1; }
+.legend .ramp-labels { display: flex; justify-content: space-between; font-size: 11px; }

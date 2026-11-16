@@ -1,0 +1,581 @@
+{
+  "seams": {
+    "35UPQ": {
+      "overlap_km2": 0
+    },
+    "35UNQ": {
+      "overlap_km2": 498,
+      "spearman_vis_norm": 0.982,
+      "ratio_vis_norm": 1.373,
+      "ratio_vis": 1.013,
+      "ratio_swir": 0.997
+    },
+    "35UPP": {
+      "overlap_km2": 653,
+      "spearman_vis_norm": 0.985,
+      "ratio_vis_norm": 0.916,
+      "ratio_vis": 0.983,
+      "ratio_swir": 0.999
+    },
+    "35UNP": {
+      "overlap_km2": 1236,
+      "spearman_vis_norm": 0.985,
+      "ratio_vis_norm": 0.948,
+      "ratio_vis": 1.012,
+      "ratio_swir": 1.0
+    }
+  },
+  "sanity": {
+    "tiles": [
+      "35UPQ",
+      "35UNQ",
+      "35UPP",
+      "35UNP"
+    ],
+    "pixels_with_data_km2": 25495,
+    "share_of_cropland_with_data": 0.869,
+    "share_of_area_with_data": 0.579,
+    "bare_dates_per_pixel": {
+      "p10": 17.0,
+      "p25": 31.0,
+      "p50": 49.0,
+      "p75": 66.0,
+      "p90": 79.0
+    },
+    "vis_norm_percentiles": {
+      "p2": 0.68,
+      "p10": 0.771,
+      "p50": 0.976,
+      "p90": 1.518,
+      "p98": 1.877
+    },
+    "vis_reflectance_percentiles": {
+      "p2": 0.0518,
+      "p10": 0.0593,
+      "p50": 0.0764,
+      "p90": 0.1161,
+      "p98": 0.1445
+    },
+    "blocks_1km": 22810,
+    "block_spearman": {
+      "wrb_Chernozems": {
+        "rho": -0.625,
+        "n": 22810
+      },
+      "wrb_Phaeozems": {
+        "rho": -0.311,
+        "n": 22810
+      },
+      "wrb_Luvisols": {
+        "rho": 0.596,
+        "n": 22810
+      },
+      "wrb_Fluvisols": {
+        "rho": -0.07,
+        "n": 22810
+      },
+      "wrb_Gleysols": {
+        "rho": 0.293,
+        "n": 22810
+      },
+      "clay": {
+        "rho": -0.093,
+        "n": 22004
+      },
+      "sand": {
+        "rho": 0.488,
+        "n": 22004
+      },
+      "soc": {
+        "rho": -0.216,
+        "n": 22004
+      },
+      "phh2o": {
+        "rho": -0.375,
+        "n": 22004
+      },
+      "slope": {
+        "rho": 0.133,
+        "n": 22810
+      },
+      "hand": {
+        "rho": -0.005,
+        "n": 22810
+      },
+      "elevation": {
+        "rho": 0.4,
+        "n": 22810
+      },
+      "tpi1000": {
+        "rho": -0.013,
+        "n": 22810
+      }
+    },
+    "block_by_soilgrids_class": {
+      "Chernozems": {
+        "n": 17634,
+        "median_vis_norm": 0.994
+      },
+      "Phaeozems": {
+        "n": 3683,
+        "median_vis_norm": 1.164
+      },
+      "Luvisols": {
+        "n": 1488,
+        "median_vis_norm": 1.605
+      }
+    },
+    "auc_luvisol_vs_chernozem_phaeozem": 0.888,
+    "block_by_hwsd_class": {
+      "other": {
+        "n": 1157,
+        "median_vis_norm": 1.001
+      },
+      "chernozems": {
+        "n": 3925,
+        "median_vis_norm": 0.879
+      },
+      "podzolized_chernozems": {
+        "n": 5256,
+        "median_vis_norm": 0.925
+      },
+      "grey_forest": {
+        "n": 12472,
+        "median_vis_norm": 1.269
+      }
+    },
+    "auc_hwsd_grey_forest_vs_chernozem": 0.912,
+    "pixel_spearman": {
+      "slope": {
+        "rho": 0.141,
+        "n": 185252
+      },
+      "hand": {
+        "rho": 0.007,
+        "n": 185252
+      },
+      "tpi300": {
+        "rho": -0.005,
+        "n": 185252
+      },
+      "tpi1000": {
+        "rho": -0.025,
+        "n": 185252
+      },
+      "rel_valley": {
+        "rho": 0.123,
+        "n": 185252
+      },
+      "n_dates": {
+        "rho": -0.154,
+        "n": 300000
+      },
+      "swir": {
+        "rho": 0.706,
+        "n": 300000
+      }
+    }
+  },
+  "site_level": {
+    "n_sites": 440,
+    "n_background": 4560,
+    "share_with_value_sites": {
+      "spot_point": 0.175,
+      "spot_min500": 0.868,
+      "spot_max500": 0.868,
+      "dark_point": 0.757,
+      "dark_zone": 0.986,
+      "dark_rel": 0.757,
+      "swir_point": 0.757,
+      "cover_point": 1.0,
+      "cover_zone": 1.0,
+      "anom_point": 0.273,
+      "anom_min500": 0.905,
+      "anom_max500": 0.905
+    },
+    "share_with_value_background": {
+      "spot_point": 0.22,
+      "spot_min500": 0.874,
+      "spot_max500": 0.874,
+      "dark_point": 0.788,
+      "dark_zone": 0.973,
+      "dark_rel": 0.786,
+      "swir_point": 0.788,
+      "cover_point": 1.0,
+      "cover_zone": 1.0,
+      "anom_point": 0.337,
+      "anom_min500": 0.89,
+      "anom_max500": 0.89
+    },
+    "univariate": {
+      "spot_point": {
+        "auc": 0.423,
+        "p": 0.025,
+        "median_sites": -0.0,
+        "median_other": 0.0
+      },
+      "spot_min500": {
+        "auc": 0.51,
+        "p": 0.53,
+        "median_sites": -0.1,
+        "median_other": -0.1
+      },
+      "spot_max500": {
+        "auc": 0.471,
+        "p": 0.065,
+        "median_sites": 0.2,
+        "median_other": 0.2
+      },
+      "dark_point": {
+        "auc": 0.473,
+        "p": 0.1,
+        "median_sites": 1.1,
+        "median_other": 1.1
+      },
+      "dark_zone": {
+        "auc": 0.48,
+        "p": 0.17,
+        "median_sites": 1.1,
+        "median_other": 1.1
+      },
+      "dark_rel": {
+        "auc": 0.449,
+        "p": 0.0019,
+        "median_sites": -0.0,
+        "median_other": 0.0
+      },
+      "swir_point": {
+        "auc": 0.479,
+        "p": 0.21,
+        "median_sites": 0.3,
+        "median_other": 0.3
+      },
+      "cover_point": {
+        "auc": 0.444,
+        "p": 0.0001,
+        "median_sites": 0.3,
+        "median_other": 0.3
+      },
+      "cover_zone": {
+        "auc": 0.544,
+        "p": 0.0022,
+        "median_sites": 0.5,
+        "median_other": 0.5
+      },
+      "anom_point": {
+        "auc": 0.468,
+        "p": 0.24,
+        "median_sites": -0.0,
+        "median_other": -0.0
+      },
+      "anom_min500": {
+        "auc": 0.505,
+        "p": 0.74,
+        "median_sites": -0.1,
+        "median_other": -0.1
+      },
+      "anom_max500": {
+        "auc": 0.473,
+        "p": 0.078,
+        "median_sites": 0.1,
+        "median_other": 0.2
+      }
+    },
+    "logistic_cv": {
+      "water_only": {
+        "auc": 0.712,
+        "sd": 0.029,
+        "auc_unsnapped_sites": 0.495
+      },
+      "water+dark_point": {
+        "auc": 0.712,
+        "sd": 0.029,
+        "auc_unsnapped_sites": 0.493
+      },
+      "water+dark_zone": {
+        "auc": 0.711,
+        "sd": 0.029,
+        "auc_unsnapped_sites": 0.491
+      },
+      "water+dark_point+zone": {
+        "auc": 0.71,
+        "sd": 0.029,
+        "auc_unsnapped_sites": 0.491
+      },
+      "water+dark_rel": {
+        "auc": 0.712,
+        "sd": 0.03,
+        "auc_unsnapped_sites": 0.495
+      },
+      "water+cover": {
+        "auc": 0.713,
+        "sd": 0.03,
+        "auc_unsnapped_sites": 0.498
+      },
+      "water+dark+cover": {
+        "auc": 0.71,
+        "sd": 0.031,
+        "auc_unsnapped_sites": 0.493
+      },
+      "water+anomaly": {
+        "auc": 0.711,
+        "sd": 0.029,
+        "auc_unsnapped_sites": 0.495
+      },
+      "dark_only": {
+        "auc": 0.52,
+        "sd": 0.033,
+        "auc_unsnapped_sites": 0.441
+      }
+    },
+    "boosting_cv": {
+      "water_only": {
+        "auc": 0.689,
+        "sd": 0.033
+      },
+      "water+dark+cover": {
+        "auc": 0.722,
+        "sd": 0.033
+      },
+      "water+anomaly": {
+        "auc": 0.689,
+        "sd": 0.035
+      }
+    },
+    "anomaly_on_fields": {
+      "all": {
+        "n_sites": 120,
+        "n_background": 1535,
+        "anom_point": {
+          "auc": 0.468,
+          "p": 0.24,
+          "median_sites": -0.0,
+          "median_other": -0.0
+        },
+        "anom_min500": {
+          "auc": 0.463,
+          "p": 0.18,
+          "median_sites": -0.2,
+          "median_other": -0.1
+        },
+        "anom_max500": {
+          "auc": 0.518,
+          "p": 0.5,
+          "median_sites": 0.2,
+          "median_other": 0.2
+        },
+        "dark_rel": {
+          "auc": 0.461,
+          "p": 0.15,
+          "median_sites": -0.0,
+          "median_other": -0.0
+        },
+        "spot_point": {
+          "auc": 0.425,
+          "p": 0.029,
+          "median_sites": -0.0,
+          "median_other": 0.0
+        }
+      },
+      "snapped_to_bank": {
+        "n_sites": 93,
+        "n_background": 1535,
+        "anom_point": {
+          "auc": 0.447,
+          "p": 0.086,
+          "median_sites": -0.0,
+          "median_other": -0.0
+        },
+        "anom_min500": {
+          "auc": 0.464,
+          "p": 0.24,
+          "median_sites": -0.2,
+          "median_other": -0.1
+        },
+        "anom_max500": {
+          "auc": 0.518,
+          "p": 0.56,
+          "median_sites": 0.2,
+          "median_other": 0.2
+        },
+        "dark_rel": {
+          "auc": 0.443,
+          "p": 0.067,
+          "median_sites": -0.0,
+          "median_other": -0.0
+        },
+        "spot_point": {
+          "auc": 0.39,
+          "p": 0.0042,
+          "median_sites": -0.0,
+          "median_other": 0.0
+        }
+      }
+    },
+    "matched_by_water": {
+      "dark_point": {
+        "n_sites": 333,
+        "median_difference": -0.0211,
+        "share_sites_lower": 0.535,
+        "p_wilcoxon": 0.66,
+        "background_sd": 0.286
+      },
+      "dark_zone": {
+        "n_sites": 434,
+        "median_difference": -0.0079,
+        "share_sites_lower": 0.512,
+        "p_wilcoxon": 0.57,
+        "background_sd": 0.2813
+      },
+      "dark_rel": {
+        "n_sites": 333,
+        "median_difference": -0.0069,
+        "share_sites_lower": 0.52,
+        "p_wilcoxon": 0.064,
+        "background_sd": 0.1276
+      },
+      "anom_point": {
+        "n_sites": 120,
+        "median_difference": 0.005,
+        "share_sites_lower": 0.492,
+        "p_wilcoxon": 0.6,
+        "background_sd": 0.0917
+      },
+      "anom_min500": {
+        "n_sites": 398,
+        "median_difference": 0.0003,
+        "share_sites_lower": 0.492,
+        "p_wilcoxon": 0.86,
+        "background_sd": 0.1002
+      },
+      "anom_max500": {
+        "n_sites": 398,
+        "median_difference": -0.0002,
+        "share_sites_lower": 0.503,
+        "p_wilcoxon": 0.57,
+        "background_sd": 0.1156
+      },
+      "spot_point": {
+        "n_sites": 77,
+        "median_difference": -0.0188,
+        "share_sites_lower": 0.545,
+        "p_wilcoxon": 0.096,
+        "background_sd": 0.1435
+      },
+      "spot_min500": {
+        "n_sites": 382,
+        "median_difference": 0.0101,
+        "share_sites_lower": 0.49,
+        "p_wilcoxon": 0.67,
+        "background_sd": 0.1594
+      },
+      "spot_max500": {
+        "n_sites": 382,
+        "median_difference": -0.0061,
+        "share_sites_lower": 0.529,
+        "p_wilcoxon": 0.78,
+        "background_sd": 0.1749
+      }
+    },
+    "matched_by_water_and_relief": {
+      "dark_point": {
+        "n_sites": 333,
+        "median_difference": -0.0338,
+        "share_sites_lower": 0.583,
+        "p_wilcoxon": 0.029,
+        "background_sd": 0.286
+      },
+      "dark_rel": {
+        "n_sites": 333,
+        "median_difference": -0.0116,
+        "share_sites_lower": 0.532,
+        "p_wilcoxon": 0.096,
+        "background_sd": 0.1276
+      },
+      "anom_min500": {
+        "n_sites": 398,
+        "median_difference": 0.0112,
+        "share_sites_lower": 0.445,
+        "p_wilcoxon": 0.14,
+        "background_sd": 0.1002
+      },
+      "spot_point": {
+        "n_sites": 77,
+        "median_difference": -0.0151,
+        "share_sites_lower": 0.545,
+        "p_wilcoxon": 0.38,
+        "background_sd": 0.1435
+      },
+      "spot_min500": {
+        "n_sites": 382,
+        "median_difference": 0.0105,
+        "share_sites_lower": 0.471,
+        "p_wilcoxon": 0.82,
+        "background_sd": 0.1594
+      },
+      "spot_max500": {
+        "n_sites": 382,
+        "median_difference": -0.0098,
+        "share_sites_lower": 0.539,
+        "p_wilcoxon": 0.19,
+        "background_sd": 0.1749
+      }
+    },
+    "logistic_cv_relief": {
+      "water+relief": {
+        "auc": 0.709,
+        "sd": 0.029,
+        "auc_unsnapped_sites": 0.49
+      },
+      "water+relief+dark_rel": {
+        "auc": 0.708,
+        "sd": 0.028,
+        "auc_unsnapped_sites": 0.49
+      },
+      "water+relief+anomaly": {
+        "auc": 0.708,
+        "sd": 0.028,
+        "auc_unsnapped_sites": 0.489
+      },
+      "water+relief+dark_rel+anomaly": {
+        "auc": 0.707,
+        "sd": 0.027,
+        "auc_unsnapped_sites": 0.491
+      },
+      "water+relief+spot": {
+        "auc": 0.708,
+        "sd": 0.029,
+        "auc_unsnapped_sites": 0.489
+      }
+    }
+  },
+  "village_level": {
+    "n_villages_with_sites": 276,
+    "n_other_villages": 1114,
+    "zone_m": 2000,
+    "univariate": {
+      "dark_zone": {
+        "auc": 0.483,
+        "p": 0.38,
+        "median_sites": 1.1,
+        "median_other": 1.2
+      },
+      "cover_zone": {
+        "auc": 0.488,
+        "p": 0.55,
+        "median_sites": 0.6,
+        "median_other": 0.6
+      }
+    },
+    "logistic_cv": {
+      "dark_zone": {
+        "auc": 0.514,
+        "sd": 0.042
+      },
+      "dark+cover": {
+        "auc": 0.528,
+        "sd": 0.047
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+ "bounds": [
+  [
+   48.06547,
+   27.37166
+  ],
+  [
+   49.88908,
+   30.02077
+  ]
+ ],
+ "size": [
+  1966,
+  2062
+ ],
+ "index": "vis_norm: brightness of bare ploughed soil relative to the median field",
+ "breaks": [
+  0.803,
+  0.883,
+  0.992,
+  1.17,
+  1.37,
+  1.596
+ ],
+ "colors": [
+  "#2b1a12",
+  "#4a2f1d",
+  "#6d4a2c",
+  "#93703f",
+  "#b8975c",
+  "#d8c285",
+  "#f0e6b8"
+ ],
+ "share_of_oblast_with_data": 0.602,
+ "tiles": [
+  "35UPQ",
+  "35UNQ",
+  "35UPP",
+  "35UNP"
+ ],
+ "attribution": "Contains modified Copernicus Sentinel data 2018–2026; cropland: © ESA WorldCover 2021"
+}

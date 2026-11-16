@@ -1,0 +1,557 @@
+{
+  "seams": {
+    "35UPQ": {
+      "overlap_km2": 0
+    }
+  },
+  "sanity": {
+    "tiles": [
+      "35UPQ"
+    ],
+    "pixels_with_data_km2": 7653,
+    "share_of_cropland_with_data": 0.959,
+    "share_of_area_with_data": 0.635,
+    "bare_dates_per_pixel": {
+      "p10": 19.0,
+      "p25": 32.0,
+      "p50": 52.0,
+      "p75": 65.0,
+      "p90": 75.0
+    },
+    "vis_norm_percentiles": {
+      "p2": 0.708,
+      "p10": 0.787,
+      "p50": 0.973,
+      "p90": 1.451,
+      "p98": 1.759
+    },
+    "vis_reflectance_percentiles": {
+      "p2": 0.0549,
+      "p10": 0.0616,
+      "p50": 0.0775,
+      "p90": 0.1151,
+      "p98": 0.1428
+    },
+    "blocks_1km": 9422,
+    "block_spearman": {
+      "wrb_Chernozems": {
+        "rho": -0.545,
+        "n": 9422
+      },
+      "wrb_Phaeozems": {
+        "rho": -0.425,
+        "n": 9422
+      },
+      "wrb_Luvisols": {
+        "rho": 0.535,
+        "n": 9422
+      },
+      "wrb_Fluvisols": {
+        "rho": 0.107,
+        "n": 9422
+      },
+      "wrb_Gleysols": {
+        "rho": 0.063,
+        "n": 9422
+      },
+      "clay": {
+        "rho": 0.194,
+        "n": 9078
+      },
+      "sand": {
+        "rho": 0.52,
+        "n": 9078
+      },
+      "soc": {
+        "rho": -0.153,
+        "n": 9078
+      },
+      "phh2o": {
+        "rho": -0.243,
+        "n": 9078
+      },
+      "slope": {
+        "rho": 0.215,
+        "n": 9422
+      },
+      "hand": {
+        "rho": 0.203,
+        "n": 9422
+      },
+      "elevation": {
+        "rho": -0.088,
+        "n": 9422
+      },
+      "tpi1000": {
+        "rho": 0.004,
+        "n": 9422
+      }
+    },
+    "block_by_soilgrids_class": {
+      "Chernozems": {
+        "n": 7832,
+        "median_vis_norm": 0.987
+      },
+      "Phaeozems": {
+        "n": 1097,
+        "median_vis_norm": 1.088
+      },
+      "Luvisols": {
+        "n": 492,
+        "median_vis_norm": 1.478
+      }
+    },
+    "auc_luvisol_vs_chernozem_phaeozem": 0.874,
+    "block_by_hwsd_class": {
+      "other": {
+        "n": 183,
+        "median_vis_norm": 0.947
+      },
+      "chernozems": {
+        "n": 2015,
+        "median_vis_norm": 0.881
+      },
+      "podzolized_chernozems": {
+        "n": 2230,
+        "median_vis_norm": 0.925
+      },
+      "grey_forest": {
+        "n": 4994,
+        "median_vis_norm": 1.234
+      }
+    },
+    "auc_hwsd_grey_forest_vs_chernozem": 0.897,
+    "pixel_spearman": {
+      "slope": {
+        "rho": 0.22,
+        "n": 264463
+      },
+      "hand": {
+        "rho": 0.194,
+        "n": 264463
+      },
+      "tpi300": {
+        "rho": -0.009,
+        "n": 264463
+      },
+      "tpi1000": {
+        "rho": -0.01,
+        "n": 264463
+      },
+      "rel_valley": {
+        "rho": 0.257,
+        "n": 264463
+      },
+      "n_dates": {
+        "rho": -0.037,
+        "n": 300000
+      },
+      "swir": {
+        "rho": 0.483,
+        "n": 300000
+      }
+    }
+  },
+  "site_level": {
+    "n_sites": 241,
+    "n_background": 2018,
+    "share_with_value_sites": {
+      "spot_point": 0.174,
+      "spot_min500": 0.925,
+      "spot_max500": 0.925,
+      "dark_point": 0.851,
+      "dark_zone": 0.988,
+      "dark_rel": 0.851,
+      "swir_point": 0.851,
+      "cover_point": 1.0,
+      "cover_zone": 1.0,
+      "anom_point": 0.315,
+      "anom_min500": 0.946,
+      "anom_max500": 0.946
+    },
+    "share_with_value_background": {
+      "spot_point": 0.24,
+      "spot_min500": 0.884,
+      "spot_max500": 0.884,
+      "dark_point": 0.834,
+      "dark_zone": 0.962,
+      "dark_rel": 0.83,
+      "swir_point": 0.834,
+      "cover_point": 1.0,
+      "cover_zone": 1.0,
+      "anom_point": 0.381,
+      "anom_min500": 0.895,
+      "anom_max500": 0.895
+    },
+    "univariate": {
+      "spot_point": {
+        "auc": 0.425,
+        "p": 0.11,
+        "median_sites": -0.0,
+        "median_other": 0.0
+      },
+      "spot_min500": {
+        "auc": 0.478,
+        "p": 0.27,
+        "median_sites": -0.1,
+        "median_other": -0.1
+      },
+      "spot_max500": {
+        "auc": 0.465,
+        "p": 0.089,
+        "median_sites": 0.2,
+        "median_other": 0.2
+      },
+      "dark_point": {
+        "auc": 0.501,
+        "p": 0.96,
+        "median_sites": 1.1,
+        "median_other": 1.1
+      },
+      "dark_zone": {
+        "auc": 0.519,
+        "p": 0.33,
+        "median_sites": 1.1,
+        "median_other": 1.1
+      },
+      "dark_rel": {
+        "auc": 0.423,
+        "p": 0.00032,
+        "median_sites": -0.0,
+        "median_other": 0.0
+      },
+      "swir_point": {
+        "auc": 0.467,
+        "p": 0.12,
+        "median_sites": 0.3,
+        "median_other": 0.3
+      },
+      "cover_point": {
+        "auc": 0.448,
+        "p": 0.0077,
+        "median_sites": 0.3,
+        "median_other": 0.4
+      },
+      "cover_zone": {
+        "auc": 0.537,
+        "p": 0.062,
+        "median_sites": 0.6,
+        "median_other": 0.6
+      },
+      "anom_point": {
+        "auc": 0.466,
+        "p": 0.33,
+        "median_sites": -0.0,
+        "median_other": -0.0
+      },
+      "anom_min500": {
+        "auc": 0.446,
+        "p": 0.0077,
+        "median_sites": -0.1,
+        "median_other": -0.1
+      },
+      "anom_max500": {
+        "auc": 0.498,
+        "p": 0.93,
+        "median_sites": 0.2,
+        "median_other": 0.2
+      }
+    },
+    "logistic_cv": {
+      "water_only": {
+        "auc": 0.741,
+        "sd": 0.036,
+        "auc_unsnapped_sites": 0.539
+      },
+      "water+dark_point": {
+        "auc": 0.74,
+        "sd": 0.035,
+        "auc_unsnapped_sites": 0.55
+      },
+      "water+dark_zone": {
+        "auc": 0.739,
+        "sd": 0.036,
+        "auc_unsnapped_sites": 0.554
+      },
+      "water+dark_point+zone": {
+        "auc": 0.738,
+        "sd": 0.036,
+        "auc_unsnapped_sites": 0.553
+      },
+      "water+dark_rel": {
+        "auc": 0.739,
+        "sd": 0.037,
+        "auc_unsnapped_sites": 0.545
+      },
+      "water+cover": {
+        "auc": 0.74,
+        "sd": 0.039,
+        "auc_unsnapped_sites": 0.533
+      },
+      "water+dark+cover": {
+        "auc": 0.739,
+        "sd": 0.039,
+        "auc_unsnapped_sites": 0.558
+      },
+      "water+anomaly": {
+        "auc": 0.738,
+        "sd": 0.035,
+        "auc_unsnapped_sites": 0.541
+      },
+      "dark_only": {
+        "auc": 0.533,
+        "sd": 0.067,
+        "auc_unsnapped_sites": 0.546
+      }
+    },
+    "boosting_cv": {
+      "water_only": {
+        "auc": 0.701,
+        "sd": 0.045
+      },
+      "water+dark+cover": {
+        "auc": 0.721,
+        "sd": 0.043
+      },
+      "water+anomaly": {
+        "auc": 0.718,
+        "sd": 0.041
+      }
+    },
+    "anomaly_on_fields": {
+      "all": {
+        "n_sites": 76,
+        "n_background": 768,
+        "anom_point": {
+          "auc": 0.466,
+          "p": 0.33,
+          "median_sites": -0.0,
+          "median_other": -0.0
+        },
+        "anom_min500": {
+          "auc": 0.437,
+          "p": 0.071,
+          "median_sites": -0.1,
+          "median_other": -0.1
+        },
+        "anom_max500": {
+          "auc": 0.507,
+          "p": 0.84,
+          "median_sites": 0.2,
+          "median_other": 0.2
+        },
+        "dark_rel": {
+          "auc": 0.444,
+          "p": 0.11,
+          "median_sites": -0.0,
+          "median_other": -0.0
+        },
+        "spot_point": {
+          "auc": 0.427,
+          "p": 0.11,
+          "median_sites": -0.0,
+          "median_other": 0.0
+        }
+      },
+      "snapped_to_bank": {
+        "n_sites": 60,
+        "n_background": 768,
+        "anom_point": {
+          "auc": 0.459,
+          "p": 0.29,
+          "median_sites": -0.0,
+          "median_other": -0.0
+        },
+        "anom_min500": {
+          "auc": 0.438,
+          "p": 0.11,
+          "median_sites": -0.1,
+          "median_other": -0.1
+        },
+        "anom_max500": {
+          "auc": 0.523,
+          "p": 0.56,
+          "median_sites": 0.2,
+          "median_other": 0.2
+        },
+        "dark_rel": {
+          "auc": 0.438,
+          "p": 0.11,
+          "median_sites": -0.0,
+          "median_other": -0.0
+        },
+        "spot_point": {
+          "auc": 0.401,
+          "p": 0.065,
+          "median_sites": -0.0,
+          "median_other": 0.0
+        }
+      }
+    },
+    "matched_by_water": {
+      "dark_point": {
+        "n_sites": 205,
+        "median_difference": -0.0308,
+        "share_sites_lower": 0.58,
+        "p_wilcoxon": 0.21,
+        "background_sd": 0.2464
+      },
+      "dark_zone": {
+        "n_sites": 238,
+        "median_difference": -0.0104,
+        "share_sites_lower": 0.517,
+        "p_wilcoxon": 0.6,
+        "background_sd": 0.2439
+      },
+      "dark_rel": {
+        "n_sites": 205,
+        "median_difference": -0.0201,
+        "share_sites_lower": 0.585,
+        "p_wilcoxon": 0.018,
+        "background_sd": 0.115
+      },
+      "anom_point": {
+        "n_sites": 76,
+        "median_difference": -0.008,
+        "share_sites_lower": 0.513,
+        "p_wilcoxon": 0.88,
+        "background_sd": 0.0854
+      },
+      "anom_min500": {
+        "n_sites": 228,
+        "median_difference": -0.0069,
+        "share_sites_lower": 0.522,
+        "p_wilcoxon": 0.073,
+        "background_sd": 0.0919
+      },
+      "anom_max500": {
+        "n_sites": 228,
+        "median_difference": -0.0111,
+        "share_sites_lower": 0.561,
+        "p_wilcoxon": 0.2,
+        "background_sd": 0.1081
+      },
+      "spot_point": {
+        "n_sites": 42,
+        "median_difference": 0.0006,
+        "share_sites_lower": 0.5,
+        "p_wilcoxon": 0.36,
+        "background_sd": 0.1459
+      },
+      "spot_min500": {
+        "n_sites": 223,
+        "median_difference": 0.0202,
+        "share_sites_lower": 0.439,
+        "p_wilcoxon": 0.89,
+        "background_sd": 0.1497
+      },
+      "spot_max500": {
+        "n_sites": 223,
+        "median_difference": -0.0155,
+        "share_sites_lower": 0.534,
+        "p_wilcoxon": 0.2,
+        "background_sd": 0.1744
+      }
+    },
+    "matched_by_water_and_relief": {
+      "dark_point": {
+        "n_sites": 205,
+        "median_difference": -0.0247,
+        "share_sites_lower": 0.556,
+        "p_wilcoxon": 0.31,
+        "background_sd": 0.2464
+      },
+      "dark_rel": {
+        "n_sites": 205,
+        "median_difference": -0.0105,
+        "share_sites_lower": 0.522,
+        "p_wilcoxon": 0.063,
+        "background_sd": 0.115
+      },
+      "anom_min500": {
+        "n_sites": 228,
+        "median_difference": 0.0075,
+        "share_sites_lower": 0.469,
+        "p_wilcoxon": 0.45,
+        "background_sd": 0.0919
+      },
+      "spot_point": {
+        "n_sites": 42,
+        "median_difference": -0.0295,
+        "share_sites_lower": 0.643,
+        "p_wilcoxon": 0.073,
+        "background_sd": 0.1459
+      },
+      "spot_min500": {
+        "n_sites": 223,
+        "median_difference": 0.0077,
+        "share_sites_lower": 0.462,
+        "p_wilcoxon": 0.6,
+        "background_sd": 0.1497
+      },
+      "spot_max500": {
+        "n_sites": 223,
+        "median_difference": -0.0113,
+        "share_sites_lower": 0.525,
+        "p_wilcoxon": 0.41,
+        "background_sd": 0.1744
+      }
+    },
+    "logistic_cv_relief": {
+      "water+relief": {
+        "auc": 0.736,
+        "sd": 0.05,
+        "auc_unsnapped_sites": 0.537
+      },
+      "water+relief+dark_rel": {
+        "auc": 0.736,
+        "sd": 0.051,
+        "auc_unsnapped_sites": 0.542
+      },
+      "water+relief+anomaly": {
+        "auc": 0.734,
+        "sd": 0.05,
+        "auc_unsnapped_sites": 0.536
+      },
+      "water+relief+dark_rel+anomaly": {
+        "auc": 0.734,
+        "sd": 0.05,
+        "auc_unsnapped_sites": 0.54
+      },
+      "water+relief+spot": {
+        "auc": 0.734,
+        "sd": 0.05,
+        "auc_unsnapped_sites": 0.534
+      }
+    }
+  },
+  "village_level": {
+    "n_villages_with_sites": 156,
+    "n_other_villages": 443,
+    "zone_m": 2000,
+    "univariate": {
+      "dark_zone": {
+        "auc": 0.566,
+        "p": 0.015,
+        "median_sites": 1.2,
+        "median_other": 1.1
+      },
+      "cover_zone": {
+        "auc": 0.471,
+        "p": 0.28,
+        "median_sites": 0.6,
+        "median_other": 0.6
+      }
+    },
+    "logistic_cv": {
+      "dark_zone": {
+        "auc": 0.563,
+        "sd": 0.098
+      },
+      "dark+cover": {
+        "auc": 0.52,
+        "sd": 0.088
+      }
+    }
+  }
+}
