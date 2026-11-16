@@ -23,7 +23,7 @@ password can be brute-forced offline). Changing it = re-run with a new one.
 Input:
     data/processed/chernyakhiv_sites.gpkg   layers "sites", "sites_refined"
     data/processed/env/flow_acc_km2.tif, elevation.tif
-    data/processed/chernyakhiv_model/suitability_150m.tif (05d; optional)
+    data/processed/chernyakhiv_model/suitability_150m_v1.tif, _v2.tif (05d; optional)
     docs/data/rivers.geojson, streams.geojson
 
 View:
@@ -58,7 +58,9 @@ PROJECT_ROOT = HERE.parents[1]
 PROCESSED = PROJECT_ROOT / "data" / "processed"
 ENV = PROCESSED / "env"
 SITES = PROCESSED / "chernyakhiv_sites.gpkg"
-SUITABILITY = PROCESSED / "chernyakhiv_model" / "suitability_150m.tif"
+# Both models are shown, switched in the panel (05d_map.py: v1 = catchment only).
+MODELS = ("v1", "v2")
+SUITABILITY = {m: PROCESSED / "chernyakhiv_model" / f"suitability_150m_{m}.tif" for m in MODELS}
 WATERWAYS = [PROJECT_ROOT / "docs" / "data" / f for f in ("rivers.geojson", "streams.geojson")]
 OUT_LOCAL = PROCESSED / "chernyakhiv_viewer"
 OUT_PRIVATE = PROJECT_ROOT / "docs" / "private"
@@ -139,12 +141,12 @@ def bare_soil_png(out: Path) -> list | None:
     return json.loads(meta.read_text(encoding="utf-8"))["bounds"]
 
 
-def suitability_png(out: Path) -> list | None:
-    if not SUITABILITY.exists():
-        print("  (no suitability raster: run 05d_map.py)")
+def suitability_png(out: Path, model: str) -> list | None:
+    if not SUITABILITY[model].exists():
+        print(f"  (no suitability raster for {model}: run 05d_map.py)")
         return None
-    rank, bounds = to_web(SUITABILITY, SUITABILITY_RES_M, Resampling.nearest)
-    classes_png(rank, SUITABILITY_CLASSES, out / "suitability.png")
+    rank, bounds = to_web(SUITABILITY[model], SUITABILITY_RES_M, Resampling.nearest)
+    classes_png(rank, SUITABILITY_CLASSES, out / f"suitability_{model}.png")
     return bounds
 
 
@@ -188,12 +190,12 @@ def candidate_mask(rank, transform, site_xy, gap_m=CANDIDATE_GAP_M, min_rank=CAN
     return mask
 
 
-def candidate_features(site_xy) -> list[dict]:
-    """Candidate zones as two dissolved polygons: the top 3 % and the rest."""
-    if not SUITABILITY.exists():
-        print("  (no suitability raster: run 05d_map.py)")
+def candidate_features(site_xy, model: str) -> list[dict]:
+    """Candidate zones of one model as two dissolved polygons: the top 3 % and the rest."""
+    if not SUITABILITY[model].exists():
+        print(f"  (no suitability raster for {model}: run 05d_map.py)")
         return []
-    with rasterio.open(SUITABILITY) as src:
+    with rasterio.open(SUITABILITY[model]) as src:
         rank, transform = src.read(1), src.transform
     mask = candidate_mask(rank, transform, site_xy)
     feats = []
@@ -204,8 +206,10 @@ def candidate_features(site_xy) -> list[dict]:
         polys = [p for p in polys if p.area >= MIN_PATCH_M2]
         if polys:
             area = sum(p.area for p in polys) / 1e6
-            print(f"  candidates {cls}: {len(polys)} patches, {area:.0f} km2")
-            feats.append({"role": "candidate", "cls": cls, "geometry": unary_union(polys)})
+            print(f"  candidates {model} {cls}: {len(polys)} patches, {area:.0f} km2")
+            feats.append(
+                {"role": "candidate", "cls": cls, "model": model, "geometry": unary_union(polys)}
+            )
     return feats
 
 
@@ -249,7 +253,8 @@ def sites_geojson() -> bytes:
             }
         )
     known = pd.concat([after.geometry, burials.geometry])
-    feats += candidate_features(np.c_[known.x, known.y])
+    for model in MODELS:
+        feats += candidate_features(np.c_[known.x, known.y], model)
     gdf = gpd.GeoDataFrame(feats, geometry="geometry", crs=before.crs).to_crs(4326)
     gdf["geometry"] = set_precision(gdf.geometry.values, 1e-5)  # ~1 m; keeps the payload small
     return gdf.to_json(drop_id=True, to_wgs84=True, ensure_ascii=False).encode("utf-8")
@@ -323,7 +328,8 @@ def main() -> None:
     print("hillshade ...")
     overlays["hillshade"] = hillshade_image(out)
     print("suitability ...")
-    overlays["suitability"] = suitability_png(out)
+    (out / "suitability.png").unlink(missing_ok=True)  # the single-model file of older runs
+    overlays["suitability"] = {m: suitability_png(out, m) for m in MODELS}
     overlays["bare_soil"] = bare_soil_png(out)
     html = (HERE / "viewer_template.html").read_text(encoding="utf-8")
     html = html.replace("/*OVERLAYS*/null", json.dumps(overlays))

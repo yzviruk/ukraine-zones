@@ -322,6 +322,16 @@ def cv_map(data, grid_df, valid, grid_xy, xy, rng) -> dict[str, np.ndarray]:
 def village_check(maps: dict[str, np.ndarray], grid_shape, grid_mask, grid_transform):
     """AUC: villages with catalogue sites vs other villages, by the p90 of the
     (out-of-fold) suitability within VILLAGE_RADIUS_M of the village node."""
+    y, scores = village_scores(maps, grid_shape, grid_mask, grid_transform)
+    result = {"n_villages": len(y), "n_with_sites": int(y.sum())}
+    for name, score in scores.items():
+        ok = ~np.isnan(score)
+        result[name] = round(float(roc_auc_score(y[ok], score[ok])), 3)
+    return result
+
+
+def village_scores(maps: dict[str, np.ndarray], grid_shape, grid_mask, grid_transform):
+    """(has catalogue sites, {map: p90 of the map within VILLAGE_RADIUS_M}) per village."""
     spec = importlib.util.spec_from_file_location("geo", HERE / "02_geocode.py")
     geo = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(geo)
@@ -336,7 +346,7 @@ def village_check(maps: dict[str, np.ndarray], grid_shape, grid_mask, grid_trans
     disk = xx * xx + yy * yy <= k * k
     inv = ~grid_transform
     centres = [tuple(int(v) for v in (inv @ (p.x, p.y))[::-1]) for p in pts]
-    result = {"n_villages": len(y), "n_with_sites": int(y.sum())}
+    result = {}
     for name, values in maps.items():
         arr = np.full(grid_shape, np.nan, dtype="float32")
         arr[grid_mask] = values
@@ -347,10 +357,8 @@ def village_check(maps: dict[str, np.ndarray], grid_shape, grid_mask, grid_trans
             v = arr[ys[ok], xs[ok]]
             v = v[~np.isnan(v)]
             score.append(np.percentile(v, 90) if v.size else np.nan)
-        score = np.array(score)
-        ok = ~np.isnan(score)
-        result[name] = round(float(roc_auc_score(y[ok], score[ok])), 3)
-    return result
+        result[name] = np.array(score)
+    return y, result
 
 
 def style(ax):
@@ -416,9 +424,10 @@ def plot_partial(model, data, names, path: Path) -> None:
     plt.close(fig)
 
 
-def build_dataset(rng) -> dict:
+def build_dataset(rng, rasters=feature_rasters) -> dict:
     """Presence + matched background with features, and the same features on the
-    150 m map grid. Shared by 05c (evaluation) and 05d (map)."""
+    150 m map grid. Shared by 05c (evaluation), 05d (map) and 05g (model v2, which
+    passes its own `rasters` generator; the background points stay the same)."""
     sites = gpd.read_file(SITES, layer="sites_refined")
     elevation, profile = read("elevation")
     transform = profile["transform"]
@@ -439,14 +448,14 @@ def build_dataset(rng) -> dict:
     print("feature rasters ...")
     grid = inside[::GRID_STEP, ::GRID_STEP]
     columns, grid_cols, s2_cols = {}, {}, {}
-    for name, arr in feature_rasters():
+    for name, arr in rasters():
         print(f"  {name}")
         columns[name] = arr[points[:, 0], points[:, 1]]
         s2_cols[name] = arr[s2_rc[:, 0], s2_rc[:, 1]]
         grid_cols[name] = arr[::GRID_STEP, ::GRID_STEP][grid]
     snap = np.r_[sites["snap_how"].to_numpy(), np.full(len(bg_rc), "background")]
     data = pd.DataFrame(columns).assign(y=y, snap=snap)
-    ok = data[FEATURES].notna().all(axis=1)
+    ok = data[list(columns)].notna().all(axis=1)
     print(f"dropped (nodata): {(~ok).sum()}")
     data, points = data[ok].reset_index(drop=True), points[ok.to_numpy()]
     grid_df = pd.DataFrame(grid_cols)

@@ -8,7 +8,7 @@
         crossorigin="">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
-  <link rel="stylesheet" href="styles.css?v=2026-11-16a">
+  <link rel="stylesheet" href="styles.css?v=2026-11-16b">
 </head>
 <body>
   <div id="map"></div>
@@ -80,11 +80,16 @@
   Черняхівська культура: придатні місця (модель)
 </label>
 <div id="potential-legend" class="legend hidden">
+  <label class="model-choice"><input type="radio" name="potential-model" value="v1" checked>
+    модель v1: лише розмір найближчого водотоку</label>
+  <label class="model-choice"><input type="radio" name="potential-model" value="v2">
+    модель v2: водотік, сонячний бік долини, рельєф, ґрунти</label>
   <div><span class="swatch" style="background:#6a3d9a"></span>висока (10 % площі області)</div>
   <div><span class="swatch" style="background:#1b9e77"></span>висока, далі 3 км від сіл з відомими пам'ятками</div>
   <div><span class="swatch" style="background:#cab2d6"></span>підвищена (наступні 15 %)</div>
-  <p>Оцінка лише за розміром найближчого водотоку (клітинки 2 км). Показує
-    придатність місцевості, а не наявність пам'яток; помірна точність.</p>
+  <p>Клітинки 2 км. Показує придатність місцевості, а не наявність пам'яток;
+    помірна точність. Модель v2 на перевірці трохи краща за v1, але різниця в
+    межах похибки, а карти помітно різняться — тому показано обидві.</p>
 </div>
     <p class="footer">
       Дані: <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>;
@@ -104,6 +109,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
-  <script src="app.js?v=2026-11-16a"></script>
+  <script src="app.js?v=2026-11-16b"></script>
 </body>
 </html>

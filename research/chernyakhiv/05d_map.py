@@ -1,9 +1,14 @@
 """
 Stage 5d: suitability map for Chernyakhiv settlements and its public 2 km version.
 
-Model: the catchment-only logistic regression of 05c (model.md: the richer
-models add nothing out of sample). Fitted on all settlements vs the matched
-background; suitability = percentile among the background (available) points.
+Two models, both published so that the reader can switch between them (user's
+decision of 2026-11-16: v2 passes the criterion in PLAN.md, but its gain is within
+noise while its map differs a lot - see model.md, "Model v2"):
+    v1   catchment-only logistic regression of 05c
+    v2   logistic v2 of 05g_model_v2.py (catchment + valley side, terrace, soils,
+         bare-soil darkness)
+Fitted on all settlements vs the matched background; suitability = percentile
+among the background (available) points.
 
 Public layer (decision 1 in PLAN.md: coarse only): 2 x 2 km cells, scored by the
 90th percentile of the 150 m suitability inside (the village-level check of 05c
@@ -14,10 +19,11 @@ used the same statistic). Classes by share of the oblast's cells:
 village with known sites (where nobody has reported one yet: either a gap in the
 record or simply an area nobody surveyed).
 
-Outputs:
-    data/processed/chernyakhiv_model/suitability_150m.tif   (LOCAL ONLY)
-    docs/data/chernyakhiv_potential.geojson                 (public, 2 km cells)
-    research/chernyakhiv/results/map_stats.json, potential_map.png
+Outputs (v1 keeps the names it had before v2 existed):
+    data/processed/chernyakhiv_model/suitability_150m_v1.tif, _v2.tif  (LOCAL ONLY)
+    docs/data/chernyakhiv_potential.geojson, chernyakhiv_potential_v2.geojson
+                                                             (public, 2 km cells)
+    research/chernyakhiv/results/map_stats.json, potential_map.png, potential_map_v2.png
 """
 
 from __future__ import annotations
@@ -39,7 +45,24 @@ import matplotlib.pyplot as plt
 
 HERE = Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parents[1]
-OUT_PUBLIC = PROJECT_ROOT / "docs" / "data" / "chernyakhiv_potential.geojson"
+PUBLIC = PROJECT_ROOT / "docs" / "data"
+# version -> (model set of 05g, public file, preview, title, data sources)
+VERSIONS = {
+    "v1": (
+        "water_only",
+        "chernyakhiv_potential.geojson",
+        "potential_map.png",
+        "модель v1 «водозбір»",
+        "Copernicus DEM",
+    ),
+    "v2": (
+        "v2",
+        "chernyakhiv_potential_v2.geojson",
+        "potential_map_v2.png",
+        "модель v2",
+        "Copernicus DEM, SoilGrids, Sentinel-2",
+    ),
+}
 PUBLIC_VILLAGES = PROJECT_ROOT / "docs" / "data" / "chernyakhiv_villages.geojson"
 
 CELL_M = 2000
@@ -58,28 +81,17 @@ def load_module(name: str):
     return module
 
 
-MODEL = load_module("05c_model")
+V2 = load_module("05g_model_v2")
+MODEL = V2.MODEL
 GEO = load_module("02_geocode")
 
 
-def suitability(ds) -> np.ndarray:
-    """Catchment-only model on the 150 m grid, as background percentile 0-100."""
-    cols, model = MODEL.make_models()["water_only"]
-    data = ds["data"]
-    model.fit(data[cols], data["y"])
-    bg = np.sort(model.predict_proba(data.loc[data["y"] == 0, cols])[:, 1])
-    rank = np.full(len(ds["grid_df"]), np.nan, dtype="float32")
-    valid = ds["grid_valid"]
-    rank[valid] = 100 * np.searchsorted(bg, model.predict_proba(ds["grid_df"][valid][cols])[:, 1])
-    rank[valid] /= len(bg)
-    return rank
-
-
-def write_local(rank, ds) -> None:
+def write_local(rank, ds, version: str) -> None:
     MODEL.OUT_LOCAL.mkdir(parents=True, exist_ok=True)
     out = np.full(ds["grid"].shape, -9999.0, dtype="float32")
     out[ds["grid"]] = np.nan_to_num(rank, nan=-9999.0)
-    with rasterio.open(MODEL.OUT_LOCAL / "suitability_150m.tif", "w", **ds["grid_profile"]) as f:
+    path = MODEL.OUT_LOCAL / f"suitability_150m_{version}.tif"
+    with rasterio.open(path, "w", **ds["grid_profile"]) as f:
         f.write(out, 1)
 
 
@@ -124,7 +136,7 @@ def class_at(points: gpd.GeoSeries, grid: gpd.GeoDataFrame) -> pd.Series:
     return joined["class"].fillna("outside").replace("", "none")
 
 
-def plot(grid: gpd.GeoDataFrame, oblast_m, path: Path) -> None:
+def plot(grid: gpd.GeoDataFrame, oblast_m, path: Path, title: str) -> None:
     fig, ax = plt.subplots(figsize=(9, 8))
     gpd.GeoSeries([oblast_m]).boundary.plot(ax=ax, color=INK_2, lw=0.8)
     grid[grid["class"] == "elevated"].plot(ax=ax, color=COLORS["elevated"], lw=0)
@@ -143,7 +155,7 @@ def plot(grid: gpd.GeoDataFrame, oblast_m, path: Path) -> None:
     ]
     ax.legend(handles=handles, frameon=False, fontsize=9, loc="lower left")
     ax.set_title(
-        "Придатність для черняхівських поселень (модель «водозбір»), клітинки 2 км",
+        f"Придатність для черняхівських поселень ({title}), клітинки 2 км",
         fontsize=10,
         color=INK,
         loc="left",
@@ -154,24 +166,22 @@ def plot(grid: gpd.GeoDataFrame, oblast_m, path: Path) -> None:
     plt.close(fig)
 
 
-def main() -> None:
-    rng = np.random.default_rng(MODEL.SEED)
-    ds = MODEL.build_dataset(rng)
-    rank = suitability(ds)
-    write_local(rank, ds)
+def export(version: str, ds, sites_v, others, oblast_m) -> tuple[dict, gpd.GeoDataFrame]:
+    """One model: local raster, public 2 km layer, preview; its numbers and grid."""
+    model, public_name, preview, title, sources = VERSIONS[version]
+    rank = V2.suitability(ds, model)
+    write_local(rank, ds, version)
 
     grid = cells(rank, ds)
-    sites_v = site_villages()
     centres = grid.geometry.centroid
     d, _ = cKDTree(np.c_[sites_v.x, sites_v.y]).query(np.c_[centres.x, centres.y])
     grid["candidate"] = (grid["class"] == "high") & (d > CANDIDATE_KM * 1000)
-
-    others = other_villages(sites_v)
     shares = {
         name: class_at(pts, grid).value_counts(normalize=True).round(3).to_dict()
         for name, pts in (("site_villages", sites_v), ("other_villages", others))
     }
     stats = {
+        "model": model,
         "cells": int(len(grid)),
         "cell_km": CELL_M / 1000,
         "high_cells": int((grid["class"] == "high").sum()),
@@ -186,15 +196,35 @@ def main() -> None:
     public = grid[grid["class"] != ""].dissolve(by=["class", "candidate"]).reset_index()
     public = public[["class", "candidate", "geometry"]].assign(
         label=lambda g: g["class"].map(CLASS_LABELS),
-        source="Модель: Магомедов 2022 (каталог) + Copernicus DEM; клітинки 2 км",
+        source=f"Модель: Магомедов 2022 (каталог) + {sources}; клітинки 2 км",
     )
-    OUT_PUBLIC.unlink(missing_ok=True)
-    public.to_crs(4326).to_file(OUT_PUBLIC, driver="GeoJSON", COORDINATE_PRECISION=4)
-    stats["public_kb"] = OUT_PUBLIC.stat().st_size // 1024
+    out = PUBLIC / public_name
+    out.unlink(missing_ok=True)
+    public.to_crs(4326).to_file(out, driver="GeoJSON", COORDINATE_PRECISION=4)
+    stats["public_kb"] = out.stat().st_size // 1024
+    plot(grid, oblast_m, MODEL.RESULTS / preview, title)
+    return stats, grid
 
+
+def main() -> None:
+    rng = np.random.default_rng(MODEL.SEED)
+    ds = MODEL.build_dataset(rng, V2.feature_rasters)  # the v1 features are among them
+    sites_v = site_villages()
+    others = other_villages(sites_v)
     oblast, _ = GEO.load_admin()
     oblast_m = gpd.GeoSeries([oblast], crs=4326).to_crs(GEO.METRIC_CRS).iloc[0]
-    plot(grid, oblast_m, MODEL.RESULTS / "potential_map.png")
+
+    stats, grids = {}, {}
+    for version in VERSIONS:
+        stats[version], grids[version] = export(version, ds, sites_v, others, oblast_m)
+    # how much the two public maps agree, cell by cell
+    both = grids["v1"].merge(grids["v2"], on=["ix", "iy"], suffixes=("_v1", "_v2"))
+    high1, high2 = both["class_v1"] == "high", both["class_v2"] == "high"
+    stats["agreement"] = {
+        "high_in_both": int((high1 & high2).sum()),
+        "share_of_v1_high_kept_in_v2": round(float((high1 & high2).sum() / high1.sum()), 3),
+        "score_spearman": round(float(both["score_v1"].corr(both["score_v2"], "spearman")), 3),
+    }
     (MODEL.RESULTS / "map_stats.json").write_text(
         json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8"
     )

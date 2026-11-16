@@ -1,0 +1,764 @@
+{
+  "n_presence": 491,
+  "n_background": 5000,
+  "n_unsnapped_sites": 115,
+  "params": {
+    "block_km": 25.0,
+    "folds": 5,
+    "repeats": 5
+  },
+  "feature_groups": {
+    "water": [
+      "facc_max",
+      "dist_ch5"
+    ],
+    "sun": [
+      "sun_ch1",
+      "sun_ch5"
+    ],
+    "terrace": [
+      "terrace_share",
+      "floodplain_share",
+      "hand_ch5",
+      "slope_mean"
+    ],
+    "heads": [
+      "dist_head"
+    ],
+    "hidden": [
+      "depth1000",
+      "tpi1000"
+    ],
+    "soil": [
+      "sg_dark_zone",
+      "sg_luvisol_zone",
+      "sg_fluvisol_zone",
+      "sg_sand_zone"
+    ],
+    "dark": [
+      "dark_point",
+      "dark_zone",
+      "dark_rel",
+      "cover_point",
+      "cover_zone"
+    ]
+  },
+  "univariate": {
+    "all_sites": {
+      "sun_ch1": {
+        "auc": 0.533,
+        "p": 0.014,
+        "median_sites": 0.0,
+        "median_other": 0.0
+      },
+      "sun_ch5": {
+        "auc": 0.533,
+        "p": 0.017,
+        "median_sites": 0.1,
+        "median_other": 0.0
+      },
+      "terrace_share": {
+        "auc": 0.638,
+        "p": 3.9e-24,
+        "median_sites": 0.3,
+        "median_other": 0.2
+      },
+      "floodplain_share": {
+        "auc": 0.659,
+        "p": 4.2e-33,
+        "median_sites": 0.1,
+        "median_other": 0.0
+      },
+      "hand_ch5": {
+        "auc": 0.34,
+        "p": 1.1e-31,
+        "median_sites": 10.6,
+        "median_other": 19.4
+      },
+      "slope_mean": {
+        "auc": 0.554,
+        "p": 8.4e-05,
+        "median_sites": 3.6,
+        "median_other": 3.2
+      },
+      "dist_head": {
+        "auc": 0.498,
+        "p": 0.89,
+        "median_sites": 420.0,
+        "median_other": 446.0
+      },
+      "depth1000": {
+        "auc": 0.604,
+        "p": 2.1e-14,
+        "median_sites": 37.1,
+        "median_other": 29.9
+      },
+      "tpi1000": {
+        "auc": 0.316,
+        "p": 2.2e-41,
+        "median_sites": -7.5,
+        "median_other": -1.8
+      },
+      "sg_dark_zone": {
+        "auc": 0.543,
+        "p": 0.0018,
+        "median_sites": 48.8,
+        "median_other": 47.0
+      },
+      "sg_luvisol_zone": {
+        "auc": 0.453,
+        "p": 0.00053,
+        "median_sites": 10.3,
+        "median_other": 11.0
+      },
+      "sg_fluvisol_zone": {
+        "auc": 0.467,
+        "p": 0.014,
+        "median_sites": 4.8,
+        "median_other": 4.9
+      },
+      "sg_sand_zone": {
+        "auc": 0.544,
+        "p": 0.0012,
+        "median_sites": 223.8,
+        "median_other": 218.9
+      },
+      "dark_point": {
+        "auc": 0.481,
+        "p": 0.16,
+        "median_sites": 1.1,
+        "median_other": 1.1
+      },
+      "dark_zone": {
+        "auc": 0.487,
+        "p": 0.35,
+        "median_sites": 1.1,
+        "median_other": 1.1
+      },
+      "dark_rel": {
+        "auc": 0.471,
+        "p": 0.032,
+        "median_sites": 0.0,
+        "median_other": 0.0
+      },
+      "cover_point": {
+        "auc": 0.44,
+        "p": 1e-05,
+        "median_sites": 0.4,
+        "median_other": 0.5
+      },
+      "cover_zone": {
+        "auc": 0.539,
+        "p": 0.0048,
+        "median_sites": 0.7,
+        "median_other": 0.6
+      }
+    },
+    "snapped_sites": {
+      "sun_ch1": {
+        "auc": 0.527,
+        "p": 0.085,
+        "median_sites": 0.0,
+        "median_other": 0.0
+      },
+      "sun_ch5": {
+        "auc": 0.529,
+        "p": 0.062,
+        "median_sites": 0.1,
+        "median_other": 0.0
+      },
+      "terrace_share": {
+        "auc": 0.686,
+        "p": 8.9e-34,
+        "median_sites": 0.4,
+        "median_other": 0.2
+      },
+      "floodplain_share": {
+        "auc": 0.722,
+        "p": 2.5e-49,
+        "median_sites": 0.1,
+        "median_other": 0.0
+      },
+      "hand_ch5": {
+        "auc": 0.287,
+        "p": 2.2e-43,
+        "median_sites": 9.5,
+        "median_other": 19.4
+      },
+      "slope_mean": {
+        "auc": 0.554,
+        "p": 0.00043,
+        "median_sites": 3.6,
+        "median_other": 3.2
+      },
+      "dist_head": {
+        "auc": 0.478,
+        "p": 0.16,
+        "median_sites": 387.1,
+        "median_other": 446.0
+      },
+      "depth1000": {
+        "auc": 0.612,
+        "p": 3.3e-13,
+        "median_sites": 37.5,
+        "median_other": 29.9
+      },
+      "tpi1000": {
+        "auc": 0.269,
+        "p": 8.6e-51,
+        "median_sites": -8.3,
+        "median_other": -1.8
+      },
+      "sg_dark_zone": {
+        "auc": 0.547,
+        "p": 0.0025,
+        "median_sites": 48.9,
+        "median_other": 47.0
+      },
+      "sg_luvisol_zone": {
+        "auc": 0.442,
+        "p": 0.00019,
+        "median_sites": 10.2,
+        "median_other": 11.0
+      },
+      "sg_fluvisol_zone": {
+        "auc": 0.464,
+        "p": 0.021,
+        "median_sites": 4.8,
+        "median_other": 4.9
+      },
+      "sg_sand_zone": {
+        "auc": 0.537,
+        "p": 0.016,
+        "median_sites": 223.4,
+        "median_other": 218.9
+      },
+      "dark_point": {
+        "auc": 0.46,
+        "p": 0.0095,
+        "median_sites": 1.1,
+        "median_other": 1.1
+      },
+      "dark_zone": {
+        "auc": 0.468,
+        "p": 0.04,
+        "median_sites": 1.0,
+        "median_other": 1.1
+      },
+      "dark_rel": {
+        "auc": 0.468,
+        "p": 0.035,
+        "median_sites": 0.0,
+        "median_other": 0.0
+      },
+      "cover_point": {
+        "auc": 0.444,
+        "p": 0.00029,
+        "median_sites": 0.4,
+        "median_other": 0.5
+      },
+      "cover_zone": {
+        "auc": 0.558,
+        "p": 0.00016,
+        "median_sites": 0.7,
+        "median_other": 0.6
+      }
+    },
+    "unsnapped_sites": {
+      "sun_ch1": {
+        "auc": 0.556,
+        "p": 0.04,
+        "median_sites": 0.2,
+        "median_other": 0.0
+      },
+      "sun_ch5": {
+        "auc": 0.545,
+        "p": 0.096,
+        "median_sites": 0.3,
+        "median_other": 0.0
+      },
+      "terrace_share": {
+        "auc": 0.479,
+        "p": 0.45,
+        "median_sites": 0.1,
+        "median_other": 0.2
+      },
+      "floodplain_share": {
+        "auc": 0.454,
+        "p": 0.084,
+        "median_sites": 0.0,
+        "median_other": 0.0
+      },
+      "hand_ch5": {
+        "auc": 0.515,
+        "p": 0.59,
+        "median_sites": 20.4,
+        "median_other": 19.4
+      },
+      "slope_mean": {
+        "auc": 0.551,
+        "p": 0.059,
+        "median_sites": 3.7,
+        "median_other": 3.2
+      },
+      "dist_head": {
+        "auc": 0.564,
+        "p": 0.019,
+        "median_sites": 510.0,
+        "median_other": 446.0
+      },
+      "depth1000": {
+        "auc": 0.578,
+        "p": 0.0041,
+        "median_sites": 36.0,
+        "median_other": 29.9
+      },
+      "tpi1000": {
+        "auc": 0.471,
+        "p": 0.29,
+        "median_sites": -3.0,
+        "median_other": -1.8
+      },
+      "sg_dark_zone": {
+        "auc": 0.529,
+        "p": 0.29,
+        "median_sites": 47.8,
+        "median_other": 47.0
+      },
+      "sg_luvisol_zone": {
+        "auc": 0.487,
+        "p": 0.62,
+        "median_sites": 10.7,
+        "median_other": 11.0
+      },
+      "sg_fluvisol_zone": {
+        "auc": 0.473,
+        "p": 0.33,
+        "median_sites": 4.8,
+        "median_other": 4.9
+      },
+      "sg_sand_zone": {
+        "auc": 0.567,
+        "p": 0.014,
+        "median_sites": 225.6,
+        "median_other": 218.9
+      },
+      "dark_point": {
+        "auc": 0.549,
+        "p": 0.073,
+        "median_sites": 1.2,
+        "median_other": 1.1
+      },
+      "dark_zone": {
+        "auc": 0.55,
+        "p": 0.068,
+        "median_sites": 1.2,
+        "median_other": 1.1
+      },
+      "dark_rel": {
+        "auc": 0.482,
+        "p": 0.5,
+        "median_sites": 0.0,
+        "median_other": 0.0
+      },
+      "cover_point": {
+        "auc": 0.426,
+        "p": 0.0063,
+        "median_sites": 0.4,
+        "median_other": 0.5
+      },
+      "cover_zone": {
+        "auc": 0.474,
+        "p": 0.34,
+        "median_sites": 0.6,
+        "median_other": 0.6
+      }
+    }
+  },
+  "cv": {
+    "water_only": {
+      "n_features": 2,
+      "auc": 0.728,
+      "sd": 0.031,
+      "gain_over_water_only": 0.0,
+      "gain_sd": 0.0,
+      "folds_better": "0/25",
+      "auc_unsnapped_sites": 0.496,
+      "auc_stage2_positions": 0.534,
+      "sites_in_top10pct": 0.284,
+      "sites_in_top20pct": 0.47,
+      "boyce": 0.941
+    },
+    "water_optimum": {
+      "n_features": 2,
+      "auc": 0.727,
+      "sd": 0.032,
+      "gain_over_water_only": -0.001,
+      "gain_sd": 0.003,
+      "folds_better": "10/25",
+      "auc_unsnapped_sites": 0.495,
+      "auc_stage2_positions": 0.531,
+      "sites_in_top10pct": 0.279,
+      "sites_in_top20pct": 0.47,
+      "boyce": 0.939
+    },
+    "water+sun": {
+      "n_features": 4,
+      "auc": 0.723,
+      "sd": 0.033,
+      "gain_over_water_only": -0.004,
+      "gain_sd": 0.011,
+      "folds_better": "13/25",
+      "auc_unsnapped_sites": 0.505,
+      "auc_stage2_positions": 0.53,
+      "sites_in_top10pct": 0.256,
+      "sites_in_top20pct": 0.477,
+      "boyce": 0.953
+    },
+    "water+terrace": {
+      "n_features": 6,
+      "auc": 0.734,
+      "sd": 0.034,
+      "gain_over_water_only": 0.006,
+      "gain_sd": 0.016,
+      "folds_better": "18/25",
+      "auc_unsnapped_sites": 0.483,
+      "auc_stage2_positions": 0.533,
+      "sites_in_top10pct": 0.287,
+      "sites_in_top20pct": 0.501,
+      "boyce": 0.945
+    },
+    "water+heads": {
+      "n_features": 3,
+      "auc": 0.724,
+      "sd": 0.032,
+      "gain_over_water_only": -0.003,
+      "gain_sd": 0.004,
+      "folds_better": "6/25",
+      "auc_unsnapped_sites": 0.495,
+      "auc_stage2_positions": 0.53,
+      "sites_in_top10pct": 0.279,
+      "sites_in_top20pct": 0.466,
+      "boyce": 0.951
+    },
+    "water+hidden": {
+      "n_features": 4,
+      "auc": 0.72,
+      "sd": 0.029,
+      "gain_over_water_only": -0.007,
+      "gain_sd": 0.011,
+      "folds_better": "5/25",
+      "auc_unsnapped_sites": 0.482,
+      "auc_stage2_positions": 0.527,
+      "sites_in_top10pct": 0.274,
+      "sites_in_top20pct": 0.47,
+      "boyce": 0.918
+    },
+    "water+soil": {
+      "n_features": 6,
+      "auc": 0.735,
+      "sd": 0.031,
+      "gain_over_water_only": 0.008,
+      "gain_sd": 0.018,
+      "folds_better": "18/25",
+      "auc_unsnapped_sites": 0.531,
+      "auc_stage2_positions": 0.564,
+      "sites_in_top10pct": 0.292,
+      "sites_in_top20pct": 0.512,
+      "boyce": 0.962
+    },
+    "water+dark": {
+      "n_features": 7,
+      "auc": 0.734,
+      "sd": 0.028,
+      "gain_over_water_only": 0.006,
+      "gain_sd": 0.015,
+      "folds_better": "17/25",
+      "auc_unsnapped_sites": 0.532,
+      "auc_stage2_positions": 0.559,
+      "sites_in_top10pct": 0.275,
+      "sites_in_top20pct": 0.472,
+      "boyce": 0.964
+    },
+    "v2_no_dark": {
+      "n_features": 15,
+      "auc": 0.734,
+      "sd": 0.033,
+      "gain_over_water_only": 0.006,
+      "gain_sd": 0.026,
+      "folds_better": "17/25",
+      "auc_unsnapped_sites": 0.532,
+      "auc_stage2_positions": 0.561,
+      "sites_in_top10pct": 0.293,
+      "sites_in_top20pct": 0.48,
+      "boyce": 0.954
+    },
+    "v2_no_dark+brightness": {
+      "n_features": 18,
+      "auc": 0.737,
+      "sd": 0.031,
+      "gain_over_water_only": 0.009,
+      "gain_sd": 0.026,
+      "folds_better": "16/25",
+      "auc_unsnapped_sites": 0.546,
+      "auc_stage2_positions": 0.57,
+      "sites_in_top10pct": 0.284,
+      "sites_in_top20pct": 0.49,
+      "boyce": 0.978
+    },
+    "v2_no_dark+cover": {
+      "n_features": 17,
+      "auc": 0.732,
+      "sd": 0.033,
+      "gain_over_water_only": 0.005,
+      "gain_sd": 0.026,
+      "folds_better": "18/25",
+      "auc_unsnapped_sites": 0.528,
+      "auc_stage2_positions": 0.56,
+      "sites_in_top10pct": 0.29,
+      "sites_in_top20pct": 0.487,
+      "boyce": 0.965
+    },
+    "v2": {
+      "n_features": 20,
+      "auc": 0.735,
+      "sd": 0.031,
+      "gain_over_water_only": 0.007,
+      "gain_sd": 0.027,
+      "folds_better": "16/25",
+      "auc_unsnapped_sites": 0.539,
+      "auc_stage2_positions": 0.57,
+      "sites_in_top10pct": 0.282,
+      "sites_in_top20pct": 0.494,
+      "boyce": 0.976
+    },
+    "gbm_v1": {
+      "n_features": 5,
+      "auc": 0.715,
+      "sd": 0.035,
+      "gain_over_water_only": -0.013,
+      "gain_sd": 0.026,
+      "folds_better": "8/25",
+      "auc_unsnapped_sites": 0.469,
+      "auc_stage2_positions": 0.538,
+      "sites_in_top10pct": 0.267,
+      "sites_in_top20pct": 0.472,
+      "boyce": 0.934
+    },
+    "gbm_v2_no_dark": {
+      "n_features": 15,
+      "auc": 0.739,
+      "sd": 0.034,
+      "gain_over_water_only": 0.011,
+      "gain_sd": 0.027,
+      "folds_better": "17/25",
+      "auc_unsnapped_sites": 0.524,
+      "auc_stage2_positions": 0.564,
+      "sites_in_top10pct": 0.328,
+      "sites_in_top20pct": 0.498,
+      "boyce": 0.981
+    },
+    "gbm_v2": {
+      "n_features": 20,
+      "auc": 0.741,
+      "sd": 0.032,
+      "gain_over_water_only": 0.013,
+      "gain_sd": 0.027,
+      "folds_better": "18/25",
+      "auc_unsnapped_sites": 0.542,
+      "auc_stage2_positions": 0.579,
+      "sites_in_top10pct": 0.304,
+      "sites_in_top20pct": 0.492,
+      "boyce": 0.981
+    }
+  },
+  "gbm_v2_permutation_importance_auc": {
+    "facc_max": 0.0915,
+    "sg_sand_zone": 0.0178,
+    "sun_ch1": 0.0132,
+    "slope_mean": 0.0094,
+    "tpi1000": 0.0077,
+    "dark_zone": 0.0068,
+    "cover_point": 0.0064,
+    "dark_point": 0.0058,
+    "hand_ch5": 0.0055,
+    "cover_zone": 0.0053,
+    "terrace_share": 0.0045,
+    "sun_ch5": 0.0043,
+    "floodplain_share": 0.0031,
+    "depth1000": 0.0022,
+    "dark_rel": 0.0013,
+    "sg_fluvisol_zone": 0.0002,
+    "sg_dark_zone": 0.0,
+    "dist_head": -0.0007,
+    "sg_luvisol_zone": -0.0008,
+    "dist_ch5": -0.0011
+  },
+  "village_auc_p90_within_2km_oof": {
+    "n_villages": 1500,
+    "n_with_sites": 298,
+    "repeats": 5,
+    "water_only": {
+      "auc": 0.61,
+      "sd_over_fold_assignments": 0.0,
+      "auc_of_mean_score": 0.61,
+      "gain_over_water_only": 0.0,
+      "gain_ci95": [
+        0.0,
+        0.0
+      ],
+      "share_of_bootstraps_better": 0.0
+    },
+    "water+sun": {
+      "auc": 0.62,
+      "sd_over_fold_assignments": 0.002,
+      "auc_of_mean_score": 0.62,
+      "gain_over_water_only": 0.01,
+      "gain_ci95": [
+        0.002,
+        0.019
+      ],
+      "share_of_bootstraps_better": 0.991
+    },
+    "v2_no_dark": {
+      "auc": 0.62,
+      "sd_over_fold_assignments": 0.009,
+      "auc_of_mean_score": 0.623,
+      "gain_over_water_only": 0.012,
+      "gain_ci95": [
+        -0.019,
+        0.041
+      ],
+      "share_of_bootstraps_better": 0.784
+    },
+    "v2_no_dark+brightness": {
+      "auc": 0.633,
+      "sd_over_fold_assignments": 0.009,
+      "auc_of_mean_score": 0.635,
+      "gain_over_water_only": 0.025,
+      "gain_ci95": [
+        -0.007,
+        0.055
+      ],
+      "share_of_bootstraps_better": 0.94
+    },
+    "v2_no_dark+cover": {
+      "auc": 0.619,
+      "sd_over_fold_assignments": 0.007,
+      "auc_of_mean_score": 0.621,
+      "gain_over_water_only": 0.011,
+      "gain_ci95": [
+        -0.02,
+        0.041
+      ],
+      "share_of_bootstraps_better": 0.764
+    },
+    "v2": {
+      "auc": 0.632,
+      "sd_over_fold_assignments": 0.008,
+      "auc_of_mean_score": 0.634,
+      "gain_over_water_only": 0.024,
+      "gain_ci95": [
+        -0.008,
+        0.054
+      ],
+      "share_of_bootstraps_better": 0.933
+    },
+    "gbm_v2_no_dark": {
+      "auc": 0.631,
+      "sd_over_fold_assignments": 0.007,
+      "auc_of_mean_score": 0.636,
+      "gain_over_water_only": 0.025,
+      "gain_ci95": [
+        -0.011,
+        0.062
+      ],
+      "share_of_bootstraps_better": 0.914
+    },
+    "gbm_v2": {
+      "auc": 0.639,
+      "sd_over_fold_assignments": 0.009,
+      "auc_of_mean_score": 0.643,
+      "gain_over_water_only": 0.033,
+      "gain_ci95": [
+        -0.003,
+        0.068
+      ],
+      "share_of_bootstraps_better": 0.962
+    }
+  },
+  "acceptance": {
+    "water_only": {
+      "village_auc": 0.61,
+      "auc_unsnapped_sites": 0.496,
+      "passes": false,
+      "village_gain_ci95": [
+        0.0,
+        0.0
+      ]
+    },
+    "water+sun": {
+      "village_auc": 0.62,
+      "auc_unsnapped_sites": 0.505,
+      "passes": true,
+      "village_gain_ci95": [
+        0.002,
+        0.019
+      ]
+    },
+    "v2_no_dark": {
+      "village_auc": 0.62,
+      "auc_unsnapped_sites": 0.532,
+      "passes": true,
+      "village_gain_ci95": [
+        -0.019,
+        0.041
+      ]
+    },
+    "v2_no_dark+brightness": {
+      "village_auc": 0.633,
+      "auc_unsnapped_sites": 0.546,
+      "passes": true,
+      "village_gain_ci95": [
+        -0.007,
+        0.055
+      ]
+    },
+    "v2_no_dark+cover": {
+      "village_auc": 0.619,
+      "auc_unsnapped_sites": 0.528,
+      "passes": true,
+      "village_gain_ci95": [
+        -0.02,
+        0.041
+      ]
+    },
+    "v2": {
+      "village_auc": 0.632,
+      "auc_unsnapped_sites": 0.539,
+      "passes": true,
+      "village_gain_ci95": [
+        -0.008,
+        0.054
+      ]
+    },
+    "gbm_v2_no_dark": {
+      "village_auc": 0.631,
+      "auc_unsnapped_sites": 0.524,
+      "passes": true,
+      "village_gain_ci95": [
+        -0.011,
+        0.062
+      ]
+    },
+    "gbm_v2": {
+      "village_auc": 0.639,
+      "auc_unsnapped_sites": 0.542,
+      "passes": true,
+      "village_gain_ci95": [
+        -0.003,
+        0.068
+      ]
+    }
+  }
+}

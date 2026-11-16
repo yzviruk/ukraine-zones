@@ -21,7 +21,9 @@ ALLOWED = {
     "sites.enc.json",
     "channels.png",
     "hillshade.webp",
-    "suitability.png",
+    "suitability.png",  # single-model page of older runs
+    "suitability_v1.png",
+    "suitability_v2.png",
     "bare_soil.png",
     "waterways.geojson",
 }

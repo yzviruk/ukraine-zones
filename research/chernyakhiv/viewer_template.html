@@ -73,6 +73,8 @@
   <label><span class="bar" style="background:rgb(40,110,210)"></span>10–100 км²</label>
   <label><span class="bar" style="background:rgb(10,50,150)"></span>≥ 100 км²</label>
   <p><strong>Де шукати нові поселення</strong></p>
+  <label><input type="radio" name="model" value="v1" checked>модель v1: лише розмір водотоку</label>
+  <label><input type="radio" name="model" value="v2">модель v2: + бік долини, рельєф, ґрунти</label>
   <label><input type="checkbox" id="showCand" checked><span class="sw" style="background:#d1495b;border-radius:2px"></span>кандидати: найвищі 3 %</label>
   <label style="padding-left:19px"><span class="sw" style="background:#f2a65a;border-radius:2px"></span>кандидати: 90–97 %</label>
   <p>Кандидат — придатне місце, де ближче 1 км немає відомих пам'яток. Це може
@@ -83,8 +85,10 @@
   <label><span class="sw" style="background:rgb(194,165,207);border-radius:2px"></span>75–90 %</label>
   <label><span class="sw" style="background:rgb(231,212,232);border-radius:2px"></span>50–75 %</label>
   <label>прозорість <input type="range" id="suitOpacity" min="0" max="100" value="60"></label>
-  <p>Придатність — це перцентиль серед доступних місць, а не ймовірність: модель
-    враховує лише розмір найближчого водотоку (якість помірна, AUC ≈ 0.6).</p>
+  <p>Придатність — це перцентиль серед доступних місць, а не ймовірність. v1
+    враховує лише розмір найближчого водотоку (AUC на рівні сіл 0.61); v2 додає
+    сонячний бік долини, рельєф, ґрунти й темноту ріллі (0.63). Різниця в межах
+    похибки, а карти помітно різняться — порівнюйте обидві.</p>
   <p><strong>Точність положення</strong> (оцінка, у попапі; клік по точці малює коло):
     A ≈ 300 м, B ≈ 500 м, C ≈ 1 км, D — лише село (≈ 1.5 км).</p>
   <p>Інші шари (відмивка, водотоки, підкладка) — праворуч угорі.</p>
@@ -151,19 +155,36 @@ if (OVERLAYS.bare_soil) {
       attribution: "Contains modified Copernicus Sentinel data 2018–2026; © ESA WorldCover 2021" });
 }
 // Suitability and candidates are switched from the panel, where their legend is.
-const suitability = OVERLAYS.suitability
-  ? L.imageOverlay("suitability.png", OVERLAYS.suitability, { opacity: 0.6, pane: "raster" }).addTo(map)
-  : null;
-const toggle = (id, layer) => {
-  const box = document.getElementById(id);
-  const apply = () => layer && (box.checked ? layer.addTo(map) : map.removeLayer(layer));
-  box.addEventListener("change", apply);
-  if (!layer) { box.checked = false; box.disabled = true; }
-};
-toggle("showSuit", suitability);
-toggle("showCand", candLayer);
+// Two models (05d_map.py), one shown at a time; the radio also picks the candidates.
+const suitability = {};
+for (const [name, bounds] of Object.entries(OVERLAYS.suitability || {})) {
+  if (bounds) suitability[name] =
+    L.imageOverlay(`suitability_${name}.png`, bounds, { opacity: 0.6, pane: "raster" });
+}
+const candidates = {};
+const modelRadios = document.querySelectorAll('input[name="model"]');
+const showSuit = document.getElementById("showSuit");
+const showCand = document.getElementById("showCand");
+function applyModel() {
+  const chosen = [...modelRadios].find(r => r.checked).value;
+  for (const [name, layer] of Object.entries(suitability)) {
+    if (showSuit.checked && name === chosen) layer.addTo(map); else map.removeLayer(layer);
+  }
+  candLayer.clearLayers();
+  if (candidates[chosen]) candLayer.addLayer(candidates[chosen]);
+  if (showCand.checked) candLayer.addTo(map); else map.removeLayer(candLayer);
+}
+modelRadios.forEach(r => {
+  r.disabled = !suitability[r.value];
+  r.addEventListener("change", applyModel);
+});
+if (!Object.keys(suitability).length) { showSuit.checked = false; showSuit.disabled = true; }
+else if (!suitability.v1) [...modelRadios].find(r => !r.disabled).checked = true;
+showSuit.addEventListener("change", applyModel);
+showCand.addEventListener("change", applyModel);
+applyModel();
 document.getElementById("suitOpacity").addEventListener("input", (e) =>
-  suitability && suitability.setOpacity(e.target.value / 100));
+  Object.values(suitability).forEach(layer => layer.setOpacity(e.target.value / 100)));
 overlayLayers["Пам'ятки"] = siteLayer;
 L.control.layers(bases, overlayLayers, { collapsed: true }).addTo(map);
 L.control.scale({ imperial: false }).addTo(map);
@@ -246,12 +267,13 @@ function show(geojson) {
   const zones = geojson.features.filter(f => f.properties.role === "candidate");
   features = geojson.features.filter(f => f.properties.role !== "candidate");
   spread(features.filter(f => f.properties.role === "after" || f.properties.role === "burial"));
-  candLayer.clearLayers();
-  if (zones.length) {
-    candLayer.addLayer(L.geoJSON(zones, { pane: "zones", interactive: false, style: f => ({
-      color: CAND_COLORS[f.properties.cls], weight: 1, fillColor: CAND_COLORS[f.properties.cls],
-      fillOpacity: 0.55 }) }));
+  for (const name of new Set(zones.map(f => f.properties.model))) {
+    candidates[name] = L.geoJSON(zones.filter(f => f.properties.model === name),
+      { pane: "zones", interactive: false, style: f => ({
+        color: CAND_COLORS[f.properties.cls], weight: 1, fillColor: CAND_COLORS[f.properties.cls],
+        fillOpacity: 0.55 }) });
   }
+  applyModel();
   render();
 }
 
@@ -288,7 +310,8 @@ if (MODE === "encrypted") {
 } else {
   fetch("sites.geojson").then(r => r.json()).then(show);
 }
-document.querySelectorAll(".panel input:not(#showSuit):not(#showCand):not(#suitOpacity)")
+document.querySelectorAll(
+  '.panel input:not(#showSuit):not(#showCand):not(#suitOpacity):not([name="model"])')
   .forEach(el => el.addEventListener("change", render));
 document.getElementById("go").addEventListener("click", () => {
   const m = byNo[+document.getElementById("findNo").value];

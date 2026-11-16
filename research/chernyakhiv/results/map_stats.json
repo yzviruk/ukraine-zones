@@ -1,23 +1,55 @@
 {
-  "cells": 7371,
-  "cell_km": 2.0,
-  "high_cells": 739,
-  "elevated_cells": 1104,
-  "candidate_cells": 453,
-  "candidate_km": 3.0,
-  "village_class_shares": {
-    "site_villages": {
-      "none": 0.441,
-      "elevated": 0.288,
-      "high": 0.271
+  "v1": {
+    "model": "water_only",
+    "cells": 7371,
+    "cell_km": 2.0,
+    "high_cells": 739,
+    "elevated_cells": 1104,
+    "candidate_cells": 453,
+    "candidate_km": 3.0,
+    "village_class_shares": {
+      "site_villages": {
+        "none": 0.441,
+        "elevated": 0.288,
+        "high": 0.271
+      },
+      "other_villages": {
+        "none": 0.604,
+        "elevated": 0.215,
+        "high": 0.181
+      }
     },
-    "other_villages": {
-      "none": 0.604,
-      "elevated": 0.215,
-      "high": 0.181
-    }
+    "n_site_villages": 299,
+    "n_other_villages": 1202,
+    "public_kb": 111
   },
-  "n_site_villages": 299,
-  "n_other_villages": 1202,
-  "public_kb": 111
+  "v2": {
+    "model": "v2",
+    "cells": 7371,
+    "cell_km": 2.0,
+    "high_cells": 738,
+    "elevated_cells": 1106,
+    "candidate_cells": 416,
+    "candidate_km": 3.0,
+    "village_class_shares": {
+      "site_villages": {
+        "none": 0.441,
+        "high": 0.304,
+        "elevated": 0.254
+      },
+      "other_villages": {
+        "none": 0.675,
+        "elevated": 0.183,
+        "high": 0.142
+      }
+    },
+    "n_site_villages": 299,
+    "n_other_villages": 1202,
+    "public_kb": 135
+  },
+  "agreement": {
+    "high_in_both": 327,
+    "share_of_v1_high_kept_in_v2": 0.442,
+    "score_spearman": 0.601
+  }
 }

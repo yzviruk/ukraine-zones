@@ -213,8 +213,21 @@ toggleChernyakhiv.addEventListener("change", () =>
 // Chernyakhiv potential (research/chernyakhiv/05d_map.py): model of landscape
 // suitability on 2 km cells. Coarse on purpose, like the sites layer.
 const POTENTIAL_COLORS = { high: "#6a3d9a", candidate: "#1b9e77", elevated: "#cab2d6" };
-const potentialRef = { layer: null };
-const potentialOptions = {
+// Two models are offered side by side (research/chernyakhiv/model.md): v2 scores
+// slightly better, within noise, and its map differs a lot.
+const POTENTIAL_MODELS = {
+  v1: {
+    file: "chernyakhiv_potential.geojson",
+    note: "Модель v1: за розміром найближчого водотоку",
+    ref: { layer: null },
+  },
+  v2: {
+    file: "chernyakhiv_potential_v2.geojson",
+    note: "Модель v2: водотік, сонячний бік долини, рельєф, ґрунти",
+    ref: { layer: null },
+  },
+};
+const potentialOptions = (model) => ({
   style: (feature) => {
     const p = feature.properties;
     const color = POTENTIAL_COLORS[p.candidate ? "candidate" : p.class];
@@ -227,19 +240,27 @@ const potentialOptions = {
       : "";
     layer.bindPopup(
       `<b>Придатність: ${p.label}</b><br>${note}` +
-        `<br><small>Модель за розміром найближчого водотоку; клітинки 2 км. ` +
+        `<br><small>${model.note}; клітинки 2 км. ` +
         `Не означає, що тут є пам'ятки.<br>${p.source}</small>`
     );
   },
-};
+});
 const togglePotential = document.getElementById("toggle-chernyakhiv-potential");
 const potentialLegend = document.getElementById("potential-legend");
-togglePotential.addEventListener("change", () => {
+const potentialChoice = document.querySelectorAll('input[name="potential-model"]');
+const potentialWanted = (name) =>
+  togglePotential.checked && [...potentialChoice].find((r) => r.checked).value === name;
+async function showPotential() {
   potentialLegend.classList.toggle("hidden", !togglePotential.checked);
-  loadAndToggle(
-    "chernyakhiv_potential.geojson",
-    potentialOptions,
-    potentialRef,
-    togglePotential.checked
+  await Promise.all(
+    Object.entries(POTENTIAL_MODELS).map(([name, model]) =>
+      loadAndToggle(model.file, potentialOptions(model), model.ref, potentialWanted(name))
+    )
   );
-});
+  // The choice may have changed while a file was loading: never show both.
+  for (const [name, model] of Object.entries(POTENTIAL_MODELS)) {
+    if (model.ref.layer && !potentialWanted(name)) map.removeLayer(model.ref.layer);
+  }
+}
+togglePotential.addEventListener("change", showPotential);
+potentialChoice.forEach((radio) => radio.addEventListener("change", showPotential));

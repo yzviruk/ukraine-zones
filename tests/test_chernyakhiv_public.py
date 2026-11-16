@@ -49,15 +49,29 @@ def test_coordinates_are_coarse(villages):
             assert round(value, 4) == pytest.approx(value, abs=1e-9)
 
 
-POTENTIAL = PUBLIC.parent / "chernyakhiv_potential.geojson"
+# Two models are published side by side (05d_map.py): v1 keeps the old file name.
+POTENTIAL = {
+    "v1": PUBLIC.parent / "chernyakhiv_potential.geojson",
+    "v2": PUBLIC.parent / "chernyakhiv_potential_v2.geojson",
+}
 POTENTIAL_PROPERTIES = {"class", "candidate", "label", "source"}
 
 
-@pytest.fixture(scope="module")
-def potential() -> gpd.GeoDataFrame:
-    if not POTENTIAL.exists():
+@pytest.fixture(scope="module", params=list(POTENTIAL))
+def potential(request) -> gpd.GeoDataFrame:
+    if not POTENTIAL[request.param].exists():
         pytest.skip("run research/chernyakhiv/05d_map.py")
-    return gpd.read_file(POTENTIAL)
+    return gpd.read_file(POTENTIAL[request.param])
+
+
+def test_site_offers_both_potential_models():
+    docs = PUBLIC.parent.parent
+    script = (docs / "app.js").read_text(encoding="utf-8")
+    page = (docs / "index.html").read_text(encoding="utf-8")
+    for name, path in POTENTIAL.items():
+        assert path.exists(), path
+        assert f'"{path.name}"' in script
+        assert f'name="potential-model" value="{name}"' in page
 
 
 def test_potential_layer_is_coarse_polygons_in_vinnytsia(potential):
