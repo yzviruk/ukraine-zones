@@ -24,6 +24,7 @@ Run: python 07_export_bare_soil.py --tiles 35UPQ 35UNQ 35UPP 35UNP
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 from pathlib import Path
 
@@ -51,33 +52,15 @@ ALPHA = 215
 
 
 def calibrated_mosaic(tiles: list[str]) -> tuple[np.ndarray, Affine, object]:
-    """Mean `vis_norm` of the tiles on one UTM grid. Each tile is normalised by its
-    own scenes, so every new tile is scaled to the mosaic on their overlap."""
-    srcs = [rasterio.open(BARE / f"{t}_bare.tif") for t in tiles]
-    crs = srcs[0].crs
-    left = min(s.bounds.left for s in srcs)
-    top = max(s.bounds.top for s in srcs)
-    w = round((max(s.bounds.right for s in srcs) - left) / PX)
-    h = round((top - min(s.bounds.bottom for s in srcs)) / PX)
-    total = np.zeros((h, w), np.float32)
-    count = np.zeros((h, w), np.float32)
-    for tile, s in zip(tiles, srcs, strict=True):
-        r0, c0 = round((top - s.bounds.top) / PX), round((s.bounds.left - left) / PX)
-        sl = (slice(r0, r0 + s.height), slice(c0, c0 + s.width))
-        a = s.read(7)
-        ok = np.isfinite(a)
-        both = ok & (count[sl] > 0)
-        if both.sum() > 10_000:
-            ratio = float(np.median(total[sl][both] / count[sl][both] / a[both]))
-            print(
-                f"  {tile}: scaled by {ratio:.3f} on {both.sum() * PX * PX / 1e6:.0f} km2 overlap"
-            )
-            a = a * ratio
-        total[sl] += np.where(ok, a, 0)
-        count[sl] += ok
-        s.close()
-    mosaic = np.where(count > 0, total / np.maximum(count, 1), np.nan).astype(np.float32)
-    return mosaic, Affine(PX, 0, left, 0, -PX, top), crs
+    """`vis_norm` of the tiles on one UTM grid, tiles calibrated on their overlaps
+    (the mosaic lives next to the composites, in 03d_bare_soil.py)."""
+    path = PROJECT_ROOT / "research" / "chernyakhiv" / "03d_bare_soil.py"
+    spec = importlib.util.spec_from_file_location("bare_soil", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    layers, transform, crs, seams = module.mosaic(tiles)
+    print("seams:", json.dumps(seams))
+    return layers["vis_norm"].astype(np.float32), transform, crs
 
 
 def block_mean(a: np.ndarray, k: int, min_share: float) -> np.ndarray:
@@ -108,7 +91,11 @@ def colorize(classes: np.ndarray) -> np.ndarray:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--tiles", nargs="+", default=["35UPQ", "35UNQ", "35UPP", "35UNP"])
+    ap.add_argument(
+        "--tiles",
+        nargs="+",
+        default=["35UPQ", "35UNQ", "35UPP", "35UNP", "35UPR", "35UNR", "35UQP"],
+    )
     args = ap.parse_args()
 
     mosaic, transform, crs = calibrated_mosaic(args.tiles)

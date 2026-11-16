@@ -15,7 +15,7 @@
  ],
  "index": "vis_norm: brightness of bare ploughed soil relative to the median field",
  "breaks": [
-  0.803,
+  0.804,
   0.883,
   0.992,
   1.17,

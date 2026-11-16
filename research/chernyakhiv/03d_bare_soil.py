@@ -389,8 +389,16 @@ def mosaic(tiles: list[str], suffix: str = ""):
     assert all(s.crs == crs for s in srcs)
     left = min(s.bounds.left for s in srcs)
     top = max(s.bounds.top for s in srcs)
-    w = round((max(s.bounds.right for s in srcs) - left) / px)
-    h = round((top - min(s.bounds.bottom for s in srcs)) / px)
+    right = max(s.bounds.right for s in srcs)
+    bottom = min(s.bounds.bottom for s in srcs)
+    area = OUT.parent / "elevation.tif"  # the oblast + 3 km: edge tiles reach far beyond it
+    if area.exists():
+        with rasterio.open(area) as ref:
+            l2, b2, r2, t2 = transform_bounds(ref.crs, crs, *ref.bounds, densify_pts=21)
+        snap = lambda v, f: f((v - left) / px) * px + left  # noqa: E731 - keep the 20 m grid
+        left, right = max(left, snap(l2, np.floor)), min(right, snap(r2, np.ceil))
+        top, bottom = min(top, snap(t2, np.ceil)), max(bottom, snap(b2, np.floor))
+    w, h = round((right - left) / px), round((top - bottom) / px)
     names = ["vis_norm", "vis", "swir"]
     total = {n: np.zeros((h, w), np.float32) for n in names}
     n_dates = np.zeros((h, w), np.float32)
@@ -398,12 +406,20 @@ def mosaic(tiles: list[str], suffix: str = ""):
     inside = np.zeros((h, w), bool)
     seams = {}
     for tile, s in zip(tiles, srcs, strict=True):
+        # the part of the tile inside the canvas
         r0, c0 = round((top - s.bounds.top) / px), round((s.bounds.left - left) / px)
-        sl = (slice(r0, r0 + s.height), slice(c0, c0 + s.width))
+        ra, rb = max(r0, 0), min(r0 + s.height, h)
+        ca, cb = max(c0, 0), min(c0 + s.width, w)
+        if ra >= rb or ca >= cb:
+            seams[tile] = {"overlap_km2": 0, "outside": True}
+            s.close()
+            continue
+        sl = (slice(ra, rb), slice(ca, cb))
+        win = Window(ca - c0, ra - r0, cb - ca, rb - ra)
         layers = {
-            "vis_norm": s.read(7),
-            "vis": s.read([1, 2, 3]).mean(axis=0),
-            "swir": s.read([5, 6]).mean(axis=0),
+            "vis_norm": s.read(7, window=win),
+            "vis": s.read([1, 2, 3], window=win).mean(axis=0),
+            "swir": s.read([5, 6], window=win).mean(axis=0),
         }
         ok = np.isfinite(layers["vis_norm"])
         both = ok & (count[sl] > 0)
@@ -421,7 +437,7 @@ def mosaic(tiles: list[str], suffix: str = ""):
         seams[tile] = seam
         for n in names:
             total[n][sl] += np.where(ok, layers[n], 0)
-        n_dates[sl] = np.maximum(n_dates[sl], np.nan_to_num(s.read(8)))
+        n_dates[sl] = np.maximum(n_dates[sl], np.nan_to_num(s.read(8, window=win)))
         count[sl] += ok
         inside[sl] = True
         s.close()

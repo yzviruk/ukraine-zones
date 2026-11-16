@@ -22,6 +22,7 @@ ALLOWED = {
     "channels.png",
     "hillshade.webp",
     "suitability.png",
+    "bare_soil.png",
     "waterways.geojson",
 }
 

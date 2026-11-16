@@ -127,6 +127,18 @@ def channels_png(out: Path) -> list:
     return bounds
 
 
+def bare_soil_png(out: Path) -> list | None:
+    """Soil darkness of ploughed land (Sentinel-2; preprocessing/07_export_bare_soil.py).
+    The same picture as on the public site: it says nothing about the sites."""
+    public = PROJECT_ROOT / "docs" / "data"
+    meta = public / "bare_soil_darkness.json"
+    if not meta.exists():
+        print("  (no soil darkness layer: run preprocessing/07_export_bare_soil.py)")
+        return None
+    (out / "bare_soil.png").write_bytes((public / "bare_soil_darkness.png").read_bytes())
+    return json.loads(meta.read_text(encoding="utf-8"))["bounds"]
+
+
 def suitability_png(out: Path) -> list | None:
     if not SUITABILITY.exists():
         print("  (no suitability raster: run 05d_map.py)")
@@ -312,6 +324,7 @@ def main() -> None:
     overlays["hillshade"] = hillshade_image(out)
     print("suitability ...")
     overlays["suitability"] = suitability_png(out)
+    overlays["bare_soil"] = bare_soil_png(out)
     html = (HERE / "viewer_template.html").read_text(encoding="utf-8")
     html = html.replace("/*OVERLAYS*/null", json.dumps(overlays))
     html = html.replace('/*MODE*/"plain"', json.dumps("encrypted" if args.private else "plain"))
