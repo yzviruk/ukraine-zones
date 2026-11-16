@@ -91,7 +91,7 @@
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
-const OVERLAYS = {"channels": [[47.93295474260809, 27.229305979972242], [50.00318896539091, 30.302083240831475]], "hillshade": [[47.93286446187735, 27.229305979972242], [50.00318896539091, 30.30235273541671]], "suitability": [[47.931871363436365, 27.229305979972242], [50.00318896539091, 30.302891724587184]]};
+const OVERLAYS = {"channels": [[47.93295474260809, 27.229305979972242], [50.00318896539091, 30.302083240831475]], "hillshade": [[47.93286446187735, 27.229305979972242], [50.00318896539091, 30.30235273541671]], "suitability": [[47.931871363436365, 27.229305979972242], [50.00318896539091, 30.302891724587184]], "bare_soil": [[48.06547, 27.37166], [49.88908, 30.02077]]};
 const MODE = "encrypted";  // "encrypted": sites.enc.json, see 05b_viewer.py
 const COLORS = { named: "#1a9e5c", dem: "#2a78d6", none: "#8a8984" };
 const SNAP_LABEL = { named: "за назвою (OSM)", dem: "за типом (DEM)", none: "немає" };
@@ -143,6 +143,13 @@ const overlayLayers = {
   "Водотоки з DEM (≥ 1 км²)": channels,
   "Водотоки OSM": waterways,
 };
+// Soil darkness of ploughed land (Sentinel-2 bare-soil composite): off by default.
+// Dark brown = darker bare soil (more humus), pale = lighter; no data off the fields.
+if (OVERLAYS.bare_soil) {
+  overlayLayers["Темнота голої ріллі (Sentinel-2): темніше = більше гумусу"] =
+    L.imageOverlay("bare_soil.png", OVERLAYS.bare_soil, { opacity: 0.8, pane: "raster",
+      attribution: "Contains modified Copernicus Sentinel data 2018–2026; © ESA WorldCover 2021" });
+}
 // Suitability and candidates are switched from the panel, where their legend is.
 const suitability = OVERLAYS.suitability
   ? L.imageOverlay("suitability.png", OVERLAYS.suitability, { opacity: 0.6, pane: "raster" }).addTo(map)
